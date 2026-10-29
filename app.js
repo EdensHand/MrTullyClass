@@ -10,6 +10,7 @@
   const finishedPrefix = storagePrefix + "finished:";
   const courseKey = storagePrefix + "course";
   const sidebarKey = storagePrefix + "sidebarCollapsed";
+  const splitterKey = storagePrefix + "editorSplitPercent";
   const maximumCodeSize = 100000;
   let canStore = true;
   let currentCourse = "CSF";
@@ -411,6 +412,81 @@
     toast("Backup imported. Check your code before leaving.");
   }
 
+  // CodeHS-style horizontal workspace resizing, with keyboard support.
+  function initSplitWorkspace() {
+    const workspace = $("coding-workspace");
+    const divider = $("pane-divider");
+    const defaultSplit = 54;
+    const stored = Number(readStorage(splitterKey));
+    let current = Number.isFinite(stored) && stored >= 25 && stored <= 75
+      ? stored : defaultSplit;
+    let activePointer = null;
+
+    function setPercent(value, persist) {
+      current = Math.max(25, Math.min(75, Math.round(value)));
+      workspace.style.setProperty("--editor-width", current + "%");
+      divider.setAttribute("aria-valuenow", String(current));
+      divider.setAttribute(
+        "aria-valuetext",
+        "Code editor " + current + " percent, output approximately " + (100 - current) + " percent"
+      );
+      if (persist) writeStorage(splitterKey, String(current));
+    }
+
+    function finishResize(event) {
+      if (activePointer === null) return;
+      if (event && event.pointerId !== undefined && event.pointerId !== activePointer) return;
+      const pointer = activePointer;
+      activePointer = null;
+      document.body.classList.remove("is-resizing");
+      if (divider.hasPointerCapture && divider.hasPointerCapture(pointer)) {
+        divider.releasePointerCapture(pointer);
+      }
+      setPercent(current, true);
+    }
+
+    function moveResize(event) {
+      if (activePointer !== event.pointerId) return;
+      const rect = workspace.getBoundingClientRect();
+      const usableWidth = rect.width - divider.getBoundingClientRect().width;
+      if (usableWidth <= 0) return;
+      const percent = ((event.clientX - rect.left) / usableWidth) * 100;
+      setPercent(percent, false);
+    }
+
+    divider.addEventListener("pointerdown", function (event) {
+      if (!event.isPrimary || event.button !== 0) return;
+      if (window.getComputedStyle(divider).display === "none") return;
+      event.preventDefault();
+      activePointer = event.pointerId;
+      divider.focus();
+      divider.setPointerCapture(event.pointerId);
+      document.body.classList.add("is-resizing");
+      moveResize(event);
+    });
+    divider.addEventListener("pointermove", moveResize);
+    divider.addEventListener("pointerup", finishResize);
+    divider.addEventListener("pointercancel", finishResize);
+    divider.addEventListener("lostpointercapture", finishResize);
+    window.addEventListener("blur", function () { finishResize(); });
+    divider.addEventListener("dblclick", function () {
+      setPercent(defaultSplit, true);
+    });
+    divider.addEventListener("keydown", function (event) {
+      let next = null;
+      const step = event.shiftKey ? 10 : 3;
+      if (event.key === "ArrowLeft") next = current - step;
+      if (event.key === "ArrowRight") next = current + step;
+      if (event.key === "Home") next = 25;
+      if (event.key === "End") next = 75;
+      if (event.key === "Enter") next = defaultSplit;
+      if (next === null) return;
+      event.preventDefault();
+      setPercent(next, true);
+    });
+    setPercent(current, false);
+  }
+
   function syncSidebarToggle() {
     const shell = document.querySelector(".app-shell");
     const toggle = $("sidebar-toggle");
@@ -497,6 +573,7 @@
       document.querySelector(".app-shell").classList.add("sidebar-collapsed");
     }
     syncSidebarToggle();
+    initSplitWorkspace();
     listen();
     const savedCourse = readStorage(courseKey);
     const fromHash = decodeURIComponent(location.hash.slice(1));
