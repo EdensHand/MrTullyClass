@@ -658,26 +658,6 @@ body { background: var(--paper); color: var(--ink); }
 }
 
 
-/* Runtime choice for native JavaScript engine */
-.runtime-mode-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #dae9f0;
-  white-space: nowrap;
-}
-.runtime-mode-select {
-  border-radius: 7px;
-  border: 1px solid #647585;
-  background: #192b36;
-  color: #e4eff5;
-  padding: 8px;
-  font-size: 11px;
-  min-width: 150px;
-  max-width: 100%;
-}
-.runtime-mode-select:focus-visible { outline: 2px solid #9ee7dd; outline-offset: 2px; }
-
-
 /* Render backend health only — no student source code is sent by this status check. */
 .backend-status {
   display: inline-flex;
