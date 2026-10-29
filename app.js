@@ -13,6 +13,8 @@
   const runtimeModeKey = storagePrefix + "javascriptRuntimeMode";
   const splitterKey = storagePrefix + "editorSplitPercent";
   const maximumCodeSize = 100000;
+  const backendHealthUrl = "https://mrtullyclass-backend.onrender.com/health";
+  const backendHealthTimeoutMs = 70000;
   let canStore = true;
   let currentCourse = "CSF";
   let currentLesson = null;
@@ -599,6 +601,53 @@
     setPercent(current, false);
   }
 
+  // Connection check only: never submit code or student information to Render.
+  async function checkBackendHealth() {
+    const button = $("backend-status");
+    const label = $("backend-status-text");
+    if (button.disabled) return;
+
+    function setBackendStatus(state, message, detail) {
+      button.dataset.state = state;
+      label.textContent = message;
+      button.title = detail;
+    }
+
+    button.disabled = true;
+    setBackendStatus("checking", "Render: Connecting…",
+      "Checking the health endpoint. A sleeping Render service may take a little while to wake.");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function () { controller.abort(); }, backendHealthTimeoutMs);
+    try {
+      const response = await fetch(backendHealthUrl, {
+        method: "GET",
+        mode: "cors",
+        credentials: "omit",
+        cache: "no-store",
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error("Server returned HTTP " + response.status);
+      const data = await response.json();
+      if (!data || data.status !== "ok" || data.service !== "MrTullyClass Backend") {
+        throw new Error("Unexpected health-check response");
+      }
+      if (data.codeExecutionEnabled !== false) {
+        setBackendStatus("connected", "Render: Connected",
+          "Backend responded to the health check. Student code still runs locally in the browser. Click to recheck.");
+      } else {
+        setBackendStatus("connected", "Render: Online · test only",
+          "Render is responding. This is only a connection test; server code execution is disabled. Click to recheck.");
+      }
+    } catch (error) {
+      setBackendStatus("unavailable", "Render: Check failed",
+        "Couldn't reach the backend. It may be waking, offline, or blocked by the network. Click to retry.");
+    } finally {
+      clearTimeout(timeoutId);
+      button.disabled = false;
+    }
+  }
+
   function syncSidebarToggle() {
     const shell = document.querySelector(".app-shell");
     const toggle = $("sidebar-toggle");
@@ -623,6 +672,7 @@
     $("sidebar-toggle").addEventListener("click", toggleSidebar);
     window.addEventListener("resize", syncSidebarToggle);
     $("topbar-help").addEventListener("click", function () { $("help-dialog").showModal(); });
+    $("backend-status").addEventListener("click", checkBackendHealth);
     document.querySelectorAll(".course-button").forEach(function (button) {
       button.addEventListener("click", function () { setCourse(button.dataset.course); });
     });
@@ -703,6 +753,7 @@
     syncSidebarToggle();
     initSplitWorkspace();
     listen();
+    checkBackendHealth();
     const savedCourse = readStorage(courseKey);
     const fromHash = decodeURIComponent(location.hash.slice(1));
     const target = byId.get(fromHash);
