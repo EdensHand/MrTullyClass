@@ -157,6 +157,11 @@
               <div class="editor-toolbar">
                 <div class="file-tab"><span aria-hidden="true" class="file-glyph">{ }</span><span id="file-name">main.js</span><span class="unsaved-circle" id="dirty-dot" hidden title="Saving"></span></div>
                 <div class="toolbar-buttons">
+                  <label class="runtime-mode-label" for="js-runtime-mode">JavaScript mode</label>
+                  <select id="js-runtime-mode" class="runtime-mode-select" aria-label="JavaScript execution mode" title="Choose how the browser interprets your code">
+                    <option value="module">ES module (supports await)</option>
+                    <option value="classic">Classic script</option>
+                  </select>
                   <span class="save-status" id="save-status" role="status" aria-live="polite">Ready</span>
                   <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
                   <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
