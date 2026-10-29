@@ -9,6 +9,7 @@
   const draftPrefix = storagePrefix + "draft:";
   const finishedPrefix = storagePrefix + "finished:";
   const courseKey = storagePrefix + "course";
+  const sidebarKey = storagePrefix + "sidebarCollapsed";
   const maximumCodeSize = 100000;
   let canStore = true;
   let currentCourse = "CSF";
@@ -410,7 +411,30 @@
     toast("Backup imported. Check your code before leaving.");
   }
 
+  function syncSidebarToggle() {
+    const shell = document.querySelector(".app-shell");
+    const toggle = $("sidebar-toggle");
+    const collapsed = shell.classList.contains("sidebar-collapsed");
+    const compactScreen = window.matchMedia("(max-width: 950px)").matches;
+    const label = compactScreen
+      ? (collapsed ? "Show class navigation" : "Hide class navigation")
+      : (collapsed ? "Expand sidebar" : "Collapse sidebar");
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute("aria-label", label);
+    toggle.title = label;
+  }
+
+  function toggleSidebar() {
+    const shell = document.querySelector(".app-shell");
+    const collapsed = shell.classList.toggle("sidebar-collapsed");
+    writeStorage(sidebarKey, collapsed ? "yes" : "no");
+    syncSidebarToggle();
+  }
+
   function listen() {
+    $("sidebar-toggle").addEventListener("click", toggleSidebar);
+    window.addEventListener("resize", syncSidebarToggle);
+    $("topbar-help").addEventListener("click", function () { $("help-dialog").showModal(); });
     document.querySelectorAll(".course-button").forEach(function (button) {
       button.addEventListener("click", function () { setCourse(button.dataset.course); });
     });
@@ -469,6 +493,10 @@
     const probe = storagePrefix + "probe";
     if (writeStorage(probe, "ok")) removeStorage(probe);
     if (!canStore) toast("This browser blocks local saving. Download files before leaving.");
+    if (readStorage(sidebarKey) === "yes") {
+      document.querySelector(".app-shell").classList.add("sidebar-collapsed");
+    }
+    syncSidebarToggle();
     listen();
     const savedCourse = readStorage(courseKey);
     const fromHash = decodeURIComponent(location.hash.slice(1));
