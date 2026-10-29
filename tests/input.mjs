@@ -13,11 +13,11 @@ assert.ok(!html.includes('id="preview-frame"'), "Do not ship a second, browser-b
 assert.ok(!app.includes("readLine(") && !app.includes("readInt(") && !app.includes("readFloat("),
   "The page must not provide proprietary input functions");
 
-assert.ok(app.includes('new WebSocket(socketUrl)'));
-assert.ok(app.includes('type: "run", code, token: nodeAccessKey'));
-assert.ok(app.includes('type: "stdin", value'));
-assert.ok(app.includes('msg.type === "stdout" || msg.type === "stderr"'));
-assert.ok(app.includes('if (!runnerAvailable)') && app.includes("nodeAccessKey"));
+const runtime = fs.readFileSync("browser-node.js", "utf8");
+assert.ok(app.includes('await browserNode.run(code,'));
+assert.ok(app.includes('await browserNode.sendInput(value)'));
+assert.ok(runtime.includes('stdin.write(String(value).slice(0, 500) + "\\r")'));
+assert.ok(runtime.includes('callbacks.onOutput(readable)') && runtime.includes('callbacks.onExit(codeExit)'));
 assert.ok(app.includes('if (!isRunnableLesson(currentLesson)) return;'));
 
 const env = { window: {} };
