@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0a1f32">
+  <meta name="description" content="MrTullyClass: a free, text-based coding workspace and assignment library for CSF, CS3, and AP Computer Science A.">
+  <title>MrTullyClass | Code. Learn. Create.</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./assignments.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to assignment workspace</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Class navigation">
+      <a class="brand" href="./" aria-label="MrTullyClass home">
+        <span class="brand-mark" aria-hidden="true"><span>&lt;/&gt;</span></span>
+        <span class="brand-name">MrTully<span>Class</span><small>THE CODING WORKSPACE</small></span>
+      </a>
+
+      <p class="sidebar-label">YOUR CLASSROOM</p>
+      <nav class="course-nav" aria-label="Choose a course">
+        <button class="course-button active" type="button" data-course="CSF" aria-pressed="true">
+          <span class="course-symbol csf" aria-hidden="true">01</span>
+          <span class="course-copy"><strong>CS Fundamentals</strong><small>CSF</small></span>
+          <span class="course-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="course-button" type="button" data-course="CS3" aria-pressed="false">
+          <span class="course-symbol cs3" aria-hidden="true">02</span>
+          <span class="course-copy"><strong>Computer Science 3</strong><small>CS3</small></span>
+          <span class="course-arrow" aria-hidden="true">›</span>
+        </button>
+        <button class="course-button" type="button" data-course="AP CSA" aria-pressed="false">
+          <span class="course-symbol ap" aria-hidden="true">AP</span>
+          <span class="course-copy"><strong>AP Computer Science A</strong><small>Java</small></span>
+          <span class="course-arrow" aria-hidden="true">›</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-info">
+        <span class="online-dot" aria-hidden="true"></span>
+        <strong>Local workspace</strong>
+        <p>Your edits stay in this browser. Download your code or export a backup before switching devices.</p>
+        <button id="open-help" type="button" class="text-button">How saving works <span aria-hidden="true">↗</span></button>
+      </div>
+      <div class="sidebar-bottom">
+        <span>BUILT FOR LEARNING</span>
+        <span class="version-tag">PILOT v0.1</span>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar">
+        <div class="topbar-location"><span class="crumb">Classroom</span><span class="crumb-sep">/</span><strong id="current-course-label">CS Fundamentals</strong></div>
+        <div class="topbar-actions">
+          <span class="status-pill"><span class="status-dot"></span>No account needed</span>
+          <button type="button" class="outline-button compact" id="import-work">Import backup</button>
+          <button type="button" class="outline-button compact" id="export-work">Back up work ↓</button>
+          <input type="file" id="backup-file" accept=".json,application/json" hidden>
+        </div>
+      </header>
+
+      <main id="workspace">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <span class="eyebrow"><span class="eyebrow-line"></span> YOUR SPACE TO BUILD</span>
+            <h1 id="hero-title">Think it. <em>Code it.</em><br>Make it happen.</h1>
+            <p>Real code. Real projects. No account setup. Pick a challenge and start building.</p>
+            <div class="hero-facts">
+              <span><span class="fact-icon">⌘</span> Write actual code</span>
+              <span><span class="fact-icon">◷</span> Auto-save in browser</span>
+              <span><span class="fact-icon">↧</span> Download your work</span>
+            </div>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="art-window">
+              <div class="art-top"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span><span class="art-file">your_future.js</span></div>
+              <div class="art-code">
+                <span class="line-no">01</span><span><b class="code-blue">const</b> developer = <b class="code-peach">"you"</b>;</span>
+                <span class="line-no">02</span><span></span>
+                <span class="line-no">03</span><span><b class="code-blue">function</b> <b class="code-mint">create</b>() {</span>
+                <span class="line-no">04</span><span>  <b class="code-purple">return</b> <b class="code-peach">"anything"</b>;</span>
+                <span class="line-no">05</span><span>}</span>
+                <span class="line-no">06</span><span class="art-comment">// your story starts here_</span>
+              </div>
+              <div class="art-glow"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-heading" aria-labelledby="library-title">
+          <div>
+            <span class="section-kicker">PICK UP A NEW SKILL</span>
+            <h2 id="library-title">Your assignment library</h2>
+            <p>Choose a lesson on the left. Its instructions and starter code will open here.</p>
+          </div>
+          <div class="progress-chip" id="progress-summary" aria-live="polite">0 of 0 finished locally</div>
+        </section>
+
+        <div class="work-grid">
+          <aside class="library-panel" aria-label="Available assignments">
+            <div class="library-search">
+              <label class="sr-only" for="assignment-search">Search assignments</label>
+              <span aria-hidden="true">⌕</span>
+              <input type="search" id="assignment-search" placeholder="Find a challenge..." autocomplete="off">
+            </div>
+            <label class="sr-only" for="unit-filter">Filter by unit</label>
+            <select id="unit-filter" class="unit-select" aria-label="Filter assignments by unit">
+              <option value="all">All units</option>
+            </select>
+            <div class="lesson-count" id="lesson-count"></div>
+            <div id="assignment-list" class="assignment-list"></div>
+            <p class="library-tip">Tip: Your code saves automatically in this browser. For school submissions, download your work and follow your teacher's directions.</p>
+          </aside>
+
+          <section class="studio-panel" aria-label="Selected assignment and code editor">
+            <div class="studio-head">
+              <div>
+                <span class="lesson-kicker" id="lesson-unit">GETTING STARTED</span>
+                <h2 id="lesson-title">Choose an assignment</h2>
+                <p id="lesson-summary">Select a challenge to begin.</p>
+              </div>
+              <button type="button" id="complete-button" class="outline-button complete-button" aria-pressed="false">✓ Mark finished</button>
+            </div>
+
+            <div class="lesson-details">
+              <div class="details-header">
+                <strong><span class="details-icon" aria-hidden="true">◎</span> Your mission</strong>
+                <span class="difficulty-tag" id="difficulty-tag">Beginner</span>
+              </div>
+              <ol id="lesson-steps" class="mission-steps"></ol>
+              <div class="goals-row">
+                <div class="goal-block"><h3>You'll practice</h3><ul id="lesson-objectives"></ul></div>
+                <div class="stretch-block"><h3>Go further ↗</h3><p id="lesson-stretch"></p></div>
+              </div>
+            </div>
+
+            <div class="editor-card" id="editor-card">
+              <div class="editor-toolbar">
+                <div class="file-tab"><span aria-hidden="true" class="file-glyph">{ }</span><span id="file-name">main.js</span><span class="unsaved-circle" id="dirty-dot" hidden title="Saving"></span></div>
+                <div class="toolbar-buttons">
+                  <span class="save-status" id="save-status" role="status" aria-live="polite">Ready</span>
+                  <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
+                  <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
+                  <button type="button" id="run-code" class="run-button">▶ Run code</button>
+                </div>
+              </div>
+              <label class="sr-only" for="code-editor">Code editor</label>
+              <textarea id="code-editor" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" wrap="off" aria-describedby="editor-hint"></textarea>
+              <div class="editor-bottom"><span id="editor-hint">Tip: Press Ctrl / Cmd + Enter to run. Tab inserts spaces.</span><span id="editor-stats">0 lines</span></div>
+            </div>
+
+            <div class="result-card" id="result-card">
+              <div class="result-head">
+                <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">Output</strong><span class="result-badge" id="result-badge">Not run</span></div>
+                <button type="button" class="text-button" id="clear-output">Clear output</button>
+              </div>
+              <div class="preview-surface" id="preview-surface" hidden>
+                <iframe title="Sandboxed program preview" id="preview-frame" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
+              </div>
+              <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
+              <p class="run-note" id="run-note">JavaScript runs in an isolated preview frame. Your edits are not sent to a server.</p>
+            </div>
+          </section>
+        </div>
+        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>No login • No server submissions • Save a backup of important work</span></footer>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="help-dialog" class="help-dialog">
+    <div class="modal-top"><h2>Where does my work go?</h2><button id="close-help" type="button" aria-label="Close help" class="close-button">×</button></div>
+    <p>This first version is a browser-only pilot. Your code is automatically saved in <strong>this browser on this device</strong>, when local browser storage is available. It is not linked to your name or Google Classroom.</p>
+    <p><strong>Before you leave:</strong> use <strong>Download</strong> to save an individual code file or <strong>Back up work</strong> to save all your drafts. You can restore a backup later with <strong>Import backup</strong>.</p>
+    <p>Do not enter passwords or personal information into the code editor. Teachers cannot see or grade work on this site yet. Follow your teacher's instructions for submitting downloaded files.</p>
+    <button type="button" id="acknowledge-help" class="run-button">Got it</button>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
