@@ -302,11 +302,11 @@
     ].join("\n");
     // Neutralize HTML script closing tags in user code.
     const safeCode = code.replace(/<\/script/gi, "<\\/script");
-    const embedded = bridge + "\ntry {\n" + safeCode + "\n} catch (__mtErr) { console.error(__mtErr.name + ': ' + __mtErr.message); }";
+    const embedded = "<script>" + bridge + "<\/script><script>" + safeCode;
     const markup = "<!doctype html><html><head><meta charset=\"utf-8\">" + sandboxCsp() +
       "<style>body{margin:0;padding:16px;font:13px system-ui;background:#f7fbfd;color:#16324a}canvas{display:block;width:100%;max-width:600px;height:auto;background:white;border:1px solid #cfdae1;border-radius:8px}</style></head>" +
       "<body><canvas id=\"stage\" width=\"600\" height=\"320\" tabindex=\"0\" aria-label=\"JavaScript canvas\"></canvas>" +
-      "<script>" + embedded + "<\/script></body></html>";
+      embedded + "<\/script></body></html>";
     elements.frame.srcdoc = markup;
     elements.badge.textContent = "Running";
     elements.output.textContent = "Your program ran. Console messages will appear here.";
