@@ -30,6 +30,9 @@ Built as a plain, static website with no npm install, external CSS or JavaScript
 - No server-side saves, cloud synchronization, account identity, teacher access to work, submission history, or automatic grading.
 - Students must **download their files and follow the teacher's directions to submit them** elsewhere.
 - Java source can be edited and downloaded but cannot be compiled or run in this static pilot.
+- JavaScript is executed by the browser's **native JavaScript engine**, not by a hand-written parser or a restricted set of example commands. The editor now provides **ES module** mode (default; supports native top-level `await`) and **classic script** mode (traditional browser script semantics). Student source is not enclosed in a synthetic function; syntax and runtime errors come from the actual engine.
+- The optional `readLine`, `readInt`, and `readFloat` helpers bridge the native runtime to the terminal input UI. They do not restrict the language or predefine student input.
+- This is browser JavaScript, **not Node.js**: `require`, Node built-ins, file system access, remote module loading, and arbitrary network requests are unavailable under the sandbox and content security policy. An infinite synchronous loop can still make a browser tab unresponsive; do not treat this prototype as a hardened multi-tenant execution service.
 - HTML/CSS preview and Java source are not connected to the interactive console input protocol; the new input functions apply to JavaScript programs in the sandboxed runner.
 - Local drafts may be lost if students clear browser data, use incognito mode, switch computers, or the district disables browser storage.
 - Marking work "Finished locally" does not tell a teacher that work is complete.
@@ -65,6 +68,22 @@ A custom domain such as \`mrtully.com\` can be configured later after that domai
 Add an object to the \`window.MT_ASSIGNMENTS\` array in \`assignments.js\`. Each assignment includes an \`id\`, \`course\` (\`CSF\`, \`CS3\`, or \`AP CSA\`), \`type\` (\`javascript\`, \`html\`, or \`java\`), \`unit\`, \`title\`, \`summary\`, \`objectives\`, \`steps\`, \`stretch\`, and starter \`code\`.
 
 Never reuse an existing assignment ID for a different project: local drafts are keyed by that ID. The assignment catalog is **public**, so do not include answer keys or confidential teaching materials in it.
+
+## JavaScript execution modes
+
+Choose the mode beside the Run button:
+
+- **ES module (default):** use modern `import`/`export` syntax where the sandbox permits modules, native top-level `await`, promises, asynchronous functions, browser DOM, and canvas drawing.
+- **Classic script:** use traditional top-level browser JavaScript. For terminal input, put an `await readLine(...)` call inside an `async` function and invoke that function.
+
+Example:
+
+```javascript
+const name = await readLine("What should I call you?");
+console.log("Hello " + name);
+```
+
+The code above runs as an ES module without rewriting the student source. `console.log` prints to the output panel. The browser itself parses and executes the student's JavaScript.
 
 ## Security and accessibility
 
