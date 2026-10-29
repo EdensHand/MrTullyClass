@@ -2,7 +2,7 @@ name: Check student workspace
 
 on:
   push:
-    branches: [main]
+    branches: [main, free-browser-nodejs]
   pull_request:
 
 permissions:
@@ -18,8 +18,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
       - name: Check JavaScript syntax
         run: |
+          node --check browser-node.js
           node --check app.js
           node --check assignments.js
           node --check tests/smoke.mjs
@@ -28,9 +31,11 @@ jobs:
         run: |
           node tests/smoke.mjs
           node tests/input.mjs
-      - name: Test Node.js backend health endpoint
+      - name: Build Cloudflare Pages website
+        run: npm run build
+      - name: Check isolation headers in deployable output
         run: |
-          node --check backend/server.js
-          node --check backend/test/server.test.js
-          cd backend
-          npm test
+          test -f dist/index.html
+          test -f dist/_headers
+          grep -q "Cross-Origin-Opener-Policy: same-origin" dist/_headers
+          grep -q "Cross-Origin-Embedder-Policy: require-corp" dist/_headers
