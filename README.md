@@ -4,6 +4,8 @@ A lightweight, **text-based** classroom coding workspace for Fundamentals of Com
 
 Built as a plain, static website with no npm install, external CSS or JavaScript dependencies, student logins, analytics, or remote database. The public pilot is intended to run on GitHub Pages.
 
+**Interface update (v0.2):** The site now uses a charcoal/slate-gray theme with teal accents. The class navigation can collapse into an icon rail on desktop or be hidden/shown on smaller screens. The choice persists in this browser when localStorage is available. The Help & saving control in the top bar remains accessible when the sidebar is collapsed.
+
 ## What works in this pilot
 
 - Switch between CSF, CS3, and AP CSA starter assignments.
@@ -16,7 +18,7 @@ Built as a plain, static website with no npm install, external CSS or JavaScript
 - Automatically save drafts to this browser's localStorage, if enabled.
 - Mark lessons complete locally (this is **not** a grade or submission).
 - Download individual source files, export all drafts as JSON, or import a prior JSON backup.
-- Use a mobile-responsive layout and a keyboard shortcut: Ctrl/Cmd + Enter runs JavaScript or HTML preview.
+- Use a mobile-responsive layout, a collapsible side navigation menu, and a keyboard shortcut: Ctrl/Cmd + Enter runs JavaScript or HTML preview.
 
 ## Important limits
 
