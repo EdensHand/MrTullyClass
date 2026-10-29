@@ -716,3 +716,14 @@ body { background: var(--paper); color: var(--ink); }
 @media (max-width: 500px) {
   .backend-status { white-space: normal; text-align: left; }
 }
+
+
+/* Isolated Node.js terminal controls */
+.terminal-input-form[hidden],
+#node-stop[hidden] { display: none !important; }
+#node-stop {
+  border-color: #a7836d;
+  color: #ffdbc4;
+  background: #5c403b;
+}
+#node-stop:hover:not(:disabled) { background: #704b44; }
