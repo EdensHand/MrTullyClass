@@ -22,6 +22,12 @@ Built as a plain, static website with no npm install, external CSS or JavaScript
 - Use a mobile-responsive layout, a collapsible side navigation menu, and a keyboard shortcut: Ctrl/Cmd + Enter runs JavaScript or HTML preview.
 - Work in a CodeHS-style split workspace: code editor on the left and output/preview on the right. Drag the center handle to resize (25–75%), use Left/Right arrows or Home/End when focused, and double-click to reset. The width is stored locally; narrow screens stack the panels vertically.
 
+## Render backend connection check
+
+The top bar now checks [MrTullyClass Backend](https://github.com/EdensHand/MrTullyClass-Backend) at `https://mrtullyclass-backend.onrender.com/health`. The status control shows when Render responds and can be clicked to retry. Render's free service may need time to wake after inactivity.
+
+**Health check only:** this makes a GET request with no credentials or student code. The Render service currently returns `"codeExecutionEnabled": false`; all JavaScript still executes inside the browser sandbox. The website's Run button is not connected to Node.js yet. Do not enable server-side execution before a secure, isolated runner is available.
+
 ## Important limits
 
 **This is not yet a learning management system.**
