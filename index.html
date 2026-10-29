@@ -152,7 +152,8 @@
               </div>
             </div>
 
-            <div class="editor-card" id="editor-card">
+            <div class="coding-workspace" id="coding-workspace" style="--editor-width: 54%;" aria-label="Coding workspace">
+              <div class="editor-card" id="editor-card">
               <div class="editor-toolbar">
                 <div class="file-tab"><span aria-hidden="true" class="file-glyph">{ }</span><span id="file-name">main.js</span><span class="unsaved-circle" id="dirty-dot" hidden title="Saving"></span></div>
                 <div class="toolbar-buttons">
@@ -167,7 +168,17 @@
               <div class="editor-bottom"><span id="editor-hint">Tip: Press Ctrl / Cmd + Enter to run. Tab inserts spaces.</span><span id="editor-stats">0 lines</span></div>
             </div>
 
-            <div class="result-card" id="result-card">
+              <div class="pane-divider" id="pane-divider" role="separator"
+                   aria-label="Resize code editor and output panels" aria-controls="editor-card result-card"
+                   aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75"
+                   aria-valuenow="54" aria-valuetext="Code editor 54 percent, output 46 percent"
+                   aria-describedby="pane-resize-help" tabindex="0"
+                   title="Drag to resize, use arrow keys, or double-click to reset">
+                <span class="divider-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              </div>
+              <span class="sr-only" id="pane-resize-help">Drag left or right to resize the code and output panels. Use left or right arrow keys to adjust, Home or End to jump, or double-click to reset.</span>
+
+              <div class="result-card" id="result-card">
               <div class="result-head">
                 <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">Output</strong><span class="result-badge" id="result-badge">Not run</span></div>
                 <button type="button" class="text-button" id="clear-output">Clear output</button>
@@ -177,6 +188,7 @@
               </div>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
               <p class="run-note" id="run-note">JavaScript runs in an isolated preview frame. Your edits are not sent to a server.</p>
+              </div>
             </div>
           </section>
         </div>
