@@ -404,8 +404,12 @@
     // Neutralize HTML script closing tags in user code.
     const safeCode = code.replace(/<\/script/gi, "<\\/script");
     // Async wrapper lets students use await readLine/readInt/readFloat without eval.
-    const program = "async function __mtStudentMain() {\\n" + safeCode +
-      "\\n}\\n__mtStudentMain().catch(error => console.error(error.name + ': ' + error.message));";
+    const program = [
+      "async function __mtStudentMain() {",
+      safeCode,
+      "}",
+      "__mtStudentMain().catch(error => console.error(error.name + ': ' + error.message));"
+    ].join("\n");
     const embedded = "<script>" + bridge + "<\/script><script>" + program;
     const markup = "<!doctype html><html><head><meta charset=\"utf-8\">" + sandboxCsp() +
       "<style>body{margin:0;padding:16px;font:13px system-ui;background:#f7fbfd;color:#16324a}canvas{display:block;width:100%;max-width:600px;height:auto;background:white;border:1px solid #cfdae1;border-radius:8px}</style></head>" +
