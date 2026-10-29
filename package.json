@@ -1,0 +1,19 @@
+{
+  "name": "mrtullyclass-browser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Free browser-based Node.js classroom editor",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node tests/smoke.mjs && node tests/input.mjs"
+  },
+  "dependencies": {
+    "@webcontainer/api": "^1.6.4"
+  },
+  "devDependencies": {
+    "vite": "^7.3.7"
+  }
+}
