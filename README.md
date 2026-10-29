@@ -83,11 +83,11 @@ const name = await readLine("What should I call you?");
 console.log("Hello " + name);
 ```
 
-The code above runs as an ES module without rewriting the student source. `console.log` prints to the output panel. The browser itself parses and executes the student's JavaScript.
+Native `prompt()`, `alert()`, and `confirm()` dialogs are permitted by the iframe sandbox. Individual browsers may still restrict embedded dialogs; for terminal-style input, `readLine()` remains available. No additional runtime or hosting service is required.\n\nThe code above runs as an ES module without rewriting the student source. `console.log` prints to the output panel. The browser itself parses and executes the student's JavaScript.
 
 ## Security and accessibility
 
-- Student-authored JavaScript and HTML run inside \`sandbox="allow-scripts"\` iframes, without \`allow-same-origin\`, with a restrictive preview content-security policy.
+- Student-authored JavaScript and HTML run inside \`sandbox="allow-scripts allow-modals"\` iframes, without \`allow-same-origin\`, with a restrictive preview content-security policy.
 - JavaScript console output is passed to the parent using \`postMessage\`, filtered by the current iframe and execution token, and inserted as text instead of HTML.
 - The site does not send student drafts to a server.
 - All interactive controls have labels and keyboard focus states, with responsive layout and reduced-motion support.
