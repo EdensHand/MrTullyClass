@@ -19,6 +19,7 @@ Built as a plain, static website with no npm install, external CSS or JavaScript
 - Mark lessons complete locally (this is **not** a grade or submission).
 - Download individual source files, export all drafts as JSON, or import a prior JSON backup.
 - Use a mobile-responsive layout, a collapsible side navigation menu, and a keyboard shortcut: Ctrl/Cmd + Enter runs JavaScript or HTML preview.
+- Work in a CodeHS-style split workspace: code editor on the left and output/preview on the right. Drag the center handle to resize (25–75%), use Left/Right arrows or Home/End when focused, and double-click to reset. The width is stored locally; narrow screens stack the panels vertically.
 
 ## Important limits
 
