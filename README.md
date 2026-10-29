@@ -14,6 +14,7 @@ Built as a plain, static website with no npm install, external CSS or JavaScript
 - Write real JavaScript or HTML/CSS in a text editor.
 - Run JavaScript in an isolated, sandboxed iframe (including an HTML canvas for graphics lessons).
 - Preview HTML/CSS in a sandboxed iframe.
+- Receive interactive input from students in the output pane using `await readLine(question)`, `await readInt(question)`, or `await readFloat(question)` in JavaScript assignments. Arbitrary answers are returned to the running code; numeric input is validated, and students may cancel a prompt. This is a browser-based **console emulator**, not a system terminal or native standard input.
 - Edit and download Java source files **without compiling them on the site**.
 - Automatically save drafts to this browser's localStorage, if enabled.
 - Mark lessons complete locally (this is **not** a grade or submission).
@@ -29,6 +30,7 @@ Built as a plain, static website with no npm install, external CSS or JavaScript
 - No server-side saves, cloud synchronization, account identity, teacher access to work, submission history, or automatic grading.
 - Students must **download their files and follow the teacher's directions to submit them** elsewhere.
 - Java source can be edited and downloaded but cannot be compiled or run in this static pilot.
+- HTML/CSS preview and Java source are not connected to the interactive console input protocol; the new input functions apply to JavaScript programs in the sandboxed runner.
 - Local drafts may be lost if students clear browser data, use incognito mode, switch computers, or the district disables browser storage.
 - Marking work "Finished locally" does not tell a teacher that work is complete.
 - Do not store real passwords, secrets, personal information, student records, or grades in the editor or in the public repository.
