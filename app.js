@@ -22,6 +22,10 @@
   let toastTimer = null;
   let runToken = null;
   let outputCount = 0;
+  let nodeSocket = null;
+  let nodeState = "idle";
+  let nodeAccessKey = null;
+  let runnerAvailable = false;
   let pendingInput = null;
   let inputQueue = [];
 
@@ -84,7 +88,23 @@
 
   function setStatus(message) { elements.status.textContent = message; }
 
+  function closeNodeConnection() {
+    const old = nodeSocket;
+    nodeSocket = null;
+    nodeState = "idle";
+    const stop = $("node-stop");
+    stop.hidden = true;
+    stop.disabled = true;
+    if (old) {
+      if (old.readyState === WebSocket.OPEN) {
+        old.send(JSON.stringify({ type: "stop" }));
+      }
+      old.close();
+    }
+  }
+
   function clearOutput(message) {
+    closeNodeConnection();
     inputQueue = [];
     pendingInput = null;
     elements.inputForm.hidden = true;
@@ -329,6 +349,108 @@
     showNextInput();
   }
 
+  // Node.js source is executed remotely in a separate E2B sandbox, never on Render.
+  // The access key stays in this page's memory and is not stored in localStorage.
+  function appendNodeChunk(chunk, error) {
+    if (nodeSocket === null) return;
+    const target = elements.output;
+    if (target.dataset.nodeInitial === "yes") {
+      target.textContent = "";
+      delete target.dataset.nodeInitial;
+    }
+    target.textContent = (target.textContent + String(chunk)).slice(-20000);
+    target.scrollTop = target.scrollHeight;
+    if (error) target.classList.add("error");
+  }
+
+  function runNodeCode(code) {
+    if (!runnerAvailable) {
+      appendOutput("Node.js execution is not enabled on Render yet. An instructor must configure E2B_API_KEY and RUNNER_ACCESS_TOKEN in the Render service settings. Browser JavaScript mode remains available.", true);
+      return;
+    }
+    if (!nodeAccessKey) {
+      const supplied = window.prompt("Instructor test access: enter RUNNER_ACCESS_TOKEN from Render (NOT your E2B API key). Do not share this key with students.");
+      if (supplied === null) {
+        appendOutput("Node.js run cancelled. Select Browser JavaScript for local execution.", false);
+        return;
+      }
+      if (supplied.length < 32) {
+        appendOutput("The classroom access token must be at least 32 characters.", true);
+        return;
+      }
+      nodeAccessKey = supplied;
+    }
+
+    const socketUrl = backendHealthUrl.replace(/^https:/, "wss:").replace(/\/health$/, "/ws");
+    let ws;
+    try { ws = new WebSocket(socketUrl); }
+    catch (error) {
+      appendOutput("Could not open the Node.js terminal connection.", true);
+      return;
+    }
+    nodeSocket = ws;
+    nodeState = "connecting";
+    elements.output.textContent = "Connecting to isolated Node.js runner…\n";
+    elements.output.dataset.nodeInitial = "yes";
+    elements.badge.textContent = "Connecting";
+    const stop = $("node-stop");
+    stop.hidden = false;
+    stop.disabled = false;
+
+    ws.addEventListener("message", event => {
+      if (ws !== nodeSocket) return;
+      let msg;
+      try { msg = JSON.parse(event.data); } catch { return; }
+      if (!msg || typeof msg.type !== "string") return;
+      if (msg.type === "ready") {
+        ws.send(JSON.stringify({type: "run", code, token: nodeAccessKey}));
+        appendNodeChunk("$ node main.js\n");
+      } else if (msg.type === "status") {
+        elements.badge.textContent = "Running Node.js";
+        if (msg.message === "Running node main.js") {
+          nodeState = "running";
+          elements.inputLabel.textContent = "Terminal input (stdin)";
+          elements.inputField.value = "";
+          elements.inputForm.hidden = false;
+          $("terminal-cancel").textContent = "Stop program";
+          elements.inputField.focus();
+        }
+      } else if (msg.type === "stdout" || msg.type === "stderr") {
+        appendNodeChunk(msg.data || "", msg.type === "stderr");
+      } else if (msg.type === "error") {
+        appendNodeChunk("\n" + (msg.message || "Runner error") + "\n", true);
+        if ((msg.message || "").includes("access key")) nodeAccessKey = null;
+      } else if (msg.type === "exit") {
+        appendNodeChunk("\n[Process exited" + (msg.code === null ? "" : " with code " + msg.code) + "]\n");
+        elements.badge.textContent = msg.code === 0 ? "Finished" : "Stopped";
+        elements.inputForm.hidden = true;
+        $("terminal-cancel").textContent = "Cancel";
+        closeNodeConnection();
+      }
+    });
+    ws.addEventListener("error", () => {
+      if (nodeSocket !== ws) return;
+      appendNodeChunk("\nTerminal connection failed. Check Render and your runner access settings.\n", true);
+      elements.badge.textContent = "Connection error";
+    });
+    ws.addEventListener("close", () => {
+      if (nodeSocket !== ws) return;
+      elements.inputForm.hidden = true;
+      $("terminal-cancel").textContent = "Cancel";
+      appendNodeChunk("\n[Connection closed]\n");
+      closeNodeConnection();
+    });
+  }
+
+  function sendNodeInput() {
+    if (nodeState !== "running" || !nodeSocket || nodeSocket.readyState !== WebSocket.OPEN) return;
+    const value = elements.inputField.value.slice(0, 500);
+    nodeSocket.send(JSON.stringify({type: "stdin", value}));
+    appendNodeChunk(value + "\n");
+    elements.inputField.value = "";
+    elements.inputField.focus();
+  }
+
   function sandboxCsp() {
     // Intentionally disallows cross-site connections and external resources.
     return "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'\">";
@@ -342,6 +464,10 @@
     const code = elements.editor.value;
     if (code.length > maximumCodeSize) {
       appendOutput("This program is too large to run in the pilot. Download the file instead.", true);
+      return;
+    }
+    if (elements.runtimeMode.value === "node") {
+      runNodeCode(code);
       return;
     }
     const mode = elements.runtimeMode.value === "classic" ? "classic" : "module";
@@ -632,6 +758,7 @@
       if (!data || data.status !== "ok" || data.service !== "MrTullyClass Backend") {
         throw new Error("Unexpected health-check response");
       }
+      runnerAvailable = data.codeExecutionEnabled === true;
       if (data.codeExecutionEnabled !== false) {
         setBackendStatus("connected", "Render: Connected",
           "Backend responded to the health check. Student code still runs locally in the browser. Click to recheck.");
@@ -640,6 +767,7 @@
           "Render is responding. This is only a connection test; server code execution is disabled. Click to recheck.");
       }
     } catch (error) {
+      runnerAvailable = false;
       setBackendStatus("unavailable", "Render: Check failed",
         "Couldn't reach the backend. It may be waking, offline, or blocked by the network. Click to retry.");
     } finally {
@@ -703,10 +831,25 @@
     $("clear-output").addEventListener("click", function () { clearOutput("Output cleared. Run the program again when ready."); });
     elements.inputForm.addEventListener("submit", function (event) {
       event.preventDefault();
-      submitTerminalInput(false);
+      if (nodeState === "running") sendNodeInput();
+      else submitTerminalInput(false);
     });
     $("terminal-cancel").addEventListener("click", function () {
-      submitTerminalInput(true);
+      if (nodeSocket) {
+        elements.output.textContent += "\n[Stopped by student]\n";
+        elements.inputForm.hidden = true;
+        $("terminal-cancel").textContent = "Cancel";
+        closeNodeConnection();
+      } else submitTerminalInput(true);
+    });
+    $("node-stop").addEventListener("click", function () {
+      if (nodeSocket) {
+        elements.output.textContent += "\n[Stopped by student]\n";
+        elements.inputForm.hidden = true;
+        $("terminal-cancel").textContent = "Cancel";
+        closeNodeConnection();
+        elements.badge.textContent = "Stopped";
+      }
     });
     elements.finish.addEventListener("click", toggleFinished);
     $("export-work").addEventListener("click", exportBackup);
