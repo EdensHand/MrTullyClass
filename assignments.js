@@ -22,31 +22,42 @@ window.MT_ASSIGNMENTS = [
   {
     id: "csf-user-input", course: "CSF", type: "javascript",
     unit: "Getting Started", title: "Interactive Conversation",
-    time: "Beginner", label: "User input",
-    summary: "Ask someone a question and make your program react to what they type.",
+    time: "Beginner", label: "Node.js terminal input",
+    summary: "Ask questions using real Node.js readline and react to whatever your user types.",
     objectives: [
-      "Use await readLine() to get a text response.",
-      "Use await readInt() to get a whole number.",
-      "Include user input in a calculation and a message."
+      "Create a readline interface using a standard Node.js module.",
+      "Use question() to read input from the terminal.",
+      "Convert text to a number before calculating."
     ],
     steps: [
-      "Press Run. Answer both questions in the output panel.",
+      "Press Run and answer the prompts in the terminal on the right.",
       "Change the first question to something original.",
-      "Ask for a second whole number and print the sum of both numbers.",
-      "Use await readFloat() to ask for a decimal, then display the result."
+      "Ask for a second number and print the sum of both numbers.",
+      "Add an if statement to respond differently based on the user's answer."
     ],
-    stretch: "Build a two-question quiz with different responses for correct and incorrect answers.",
+    stretch: "Make a two-question interactive quiz with different responses to correct and incorrect answers.",
     code: [
-      "// This program asks the user questions in the output panel.",
-      "// Use await so the program waits for each answer.",
-      "const name = await readLine(\"What name should I call you?\");",
-      "const favoriteNumber = await readInt(\"Choose a whole number:\");",
+      "// Normal Node.js: the same code runs in a desktop terminal.",
+      "const readline = require(\"node:readline/promises\");",
+      "const rl = readline.createInterface({",
+      "  input: process.stdin,",
+      "  output: process.stdout",
+      "});",
       "",
-      "console.log(\"Hello, \" + name + \"!\");",
-      "console.log(\"Twice your number is \" + (favoriteNumber * 2));",
+      "async function main() {",
+      "  try {",
+      "    const name = await rl.question(\"What is your name? \");",
+      "    const answer = await rl.question(\"Choose a whole number: \");",
+      "    const number = Number(answer);",
+      "    console.log(\"Hello, \" + name + \"!\");",
+      "    console.log(\"Twice your number is \" + (number * 2));",
+      "    // TODO: Ask for another number and print the sum.",
+      "  } finally {",
+      "    rl.close();",
+      "  }",
+      "}",
       "",
-      "// TODO: Ask for another whole number and print the sum.",
-      "// TODO: Try readFloat() to accept a decimal number."
+      "main().catch(console.error);"
     ].join("\n")
   },
   {
