@@ -11,7 +11,10 @@ assert.ok(html.includes('id="terminal-input-form"') && html.includes('id="termin
 assert.ok(html.includes('id="terminal-cancel"'));
 assert.ok(css.includes(".terminal-input-form"));
 assert.ok(app.includes("requestTerminalInput(data)") && app.includes("submitTerminalInput(cancelled)"));
-assert.ok(app.includes("mt-class-input-response") && app.includes("async function __mtStudentMain()"));
+assert.ok(app.includes("mt-class-input-response") && app.includes('type=\\\"module\\\"'), "ES module execution should use browser engine");
+assert.ok(app.includes("const studentScript") && app.includes("safeCode") && app.includes('mode === "classic"'), "Native unwrapped classic and module execution modes required");
+assert.ok(!app.includes("async function __mtStudentMain()"), "Student code must not be wrapped in a synthetic async function");
+assert.ok(html.includes('id="js-runtime-mode"'), "Mode selector must be available");
 assert.ok(assignments.includes('id: "csf-user-input"'));
 
 const sourceMatch = app.match(/    const bridge = \[([\s\S]*?)\n    \]\.join\("\\n"\);/);
