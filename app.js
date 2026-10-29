@@ -98,8 +98,12 @@
     if (old) {
       if (old.readyState === WebSocket.OPEN) {
         old.send(JSON.stringify({ type: "stop" }));
+        old.close();
+      } else if (old.readyState === WebSocket.CONNECTING) {
+        old.addEventListener("open", function () { old.close(); }, { once: true });
+      } else if (old.readyState !== WebSocket.CLOSED) {
+        old.close();
       }
-      old.close();
     }
   }
 
