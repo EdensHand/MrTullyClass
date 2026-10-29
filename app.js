@@ -19,6 +19,8 @@
   let toastTimer = null;
   let runToken = null;
   let outputCount = 0;
+  let pendingInput = null;
+  let inputQueue = [];
 
   const $ = function (id) { return document.getElementById(id); };
   const elements = {
@@ -33,7 +35,9 @@
     frame: $("preview-frame"), badge: $("result-badge"),
     resultLabel: $("result-label"), note: $("run-note"),
     stats: $("editor-stats"), progress: $("progress-summary"),
-    courseLabel: $("current-course-label")
+    courseLabel: $("current-course-label"),
+    inputForm: $("terminal-input-form"), inputLabel: $("terminal-input-label"),
+    inputField: $("terminal-input")
   };
 
   function readStorage(key) {
@@ -77,6 +81,10 @@
   function setStatus(message) { elements.status.textContent = message; }
 
   function clearOutput(message) {
+    inputQueue = [];
+    pendingInput = null;
+    elements.inputForm.hidden = true;
+    elements.inputField.value = "";
     runToken = null;
     elements.frame.removeAttribute("srcdoc");
     elements.preview.hidden = true;
@@ -230,7 +238,9 @@
     elements.resultLabel.textContent = lesson.type === "html" ? "Webpage preview" : lesson.type === "java" ? "Java source" : "Program output";
     elements.note.textContent = lesson.type === "java"
       ? "Java code can be edited and downloaded here. This pilot does not compile or execute Java."
-      : "Programs run in a restricted preview frame. Your code is not uploaded or submitted to a server.";
+      : lesson.type === "javascript"
+        ? "Interactive input: const name = await readLine('Your name?'); or await readInt('Your age?'). No login or server submissions."
+        : "Webpage previews run in a restricted frame. Your code is not uploaded or submitted to a server.";
     elements.finish.setAttribute("aria-pressed", String(isFinished(id)));
     elements.finish.textContent = isFinished(id) ? "✓ Finished locally" : "✓ Mark finished";
     clearOutput(lesson.type === "java" ? "Download Main.java and run it using your teacher-approved Java environment." : "Press Run to see your output here.");
@@ -258,6 +268,59 @@
     elements.output.textContent = next.slice(-20000);
     if (isError) elements.output.classList.add("error");
     elements.badge.textContent = isError ? "Error" : "Ran";
+  }
+
+  // Requests are associated with a specific isolated preview run.
+  // Queueing also supports programs that request more than one value at a time.
+  function showNextInput() {
+    if (pendingInput || !inputQueue.length || !runToken) return;
+    pendingInput = inputQueue.shift();
+    elements.inputLabel.textContent = pendingInput.prompt || "Your program is waiting for input:";
+    elements.inputField.value = "";
+    elements.inputForm.hidden = false;
+    elements.badge.textContent = "Waiting for input";
+    elements.inputField.focus();
+  }
+
+  function requestTerminalInput(data) {
+    if (typeof data.requestId !== "number" ||
+        !Number.isSafeInteger(data.requestId) || data.requestId < 1 ||
+        data.requestId > 1000 || inputQueue.length > 50) {
+      appendOutput("Too many input requests.", true);
+      return;
+    }
+    inputQueue.push({
+      token: runToken,
+      requestId: data.requestId,
+      prompt: typeof data.value === "string" ? data.value.slice(0, 300) : ""
+    });
+    showNextInput();
+  }
+
+  function submitTerminalInput(cancelled) {
+    if (!pendingInput || !runToken || pendingInput.token !== runToken) return;
+    const request = pendingInput;
+    const value = elements.inputField.value.slice(0, 500);
+    pendingInput = null;
+    elements.inputForm.hidden = true;
+    elements.inputField.value = "";
+
+    if (!cancelled) {
+      appendOutput("> " + (request.prompt ? request.prompt + " " : "") + value, false);
+    }
+    // The sandbox has an opaque origin; verify the token and source in each direction.
+    if (elements.frame.contentWindow) {
+      elements.frame.contentWindow.postMessage({
+        kind: "mt-class-input-response",
+        token: request.token,
+        requestId: request.requestId,
+        value: value,
+        cancelled: !!cancelled
+      }, "*");
+    }
+    if (cancelled) appendOutput("Input cancelled.", true);
+    else elements.badge.textContent = "Running";
+    showNextInput();
   }
 
   function sandboxCsp() {
@@ -294,24 +357,63 @@
     const token = JSON.stringify(runToken);
     // Code runs inside the iframe's opaque sandboxed origin, never in the host page.
     const bridge = [
-      "const __mtSend = (type, value) => parent.postMessage({kind:'mt-class-output',token:" + token + ",type:type,value:String(value)}, '*');",
+      "const __mtToken = " + token + ";",
+      "const __mtSend = (type, value, requestId) => parent.postMessage({kind:'mt-class-output',token:__mtToken,type:type,value:String(value),requestId:requestId}, '*');",
       "const __mtFmt = value => { if (typeof value === 'string') return value; try { return JSON.stringify(value); } catch (err) { return String(value); } };",
       "console.log = (...args) => __mtSend('log', args.map(__mtFmt).join(' '));",
       "console.warn = (...args) => __mtSend('log', args.map(__mtFmt).join(' '));",
       "console.error = (...args) => __mtSend('error', args.map(__mtFmt).join(' '));",
       "window.onerror = (msg) => { __mtSend('error', msg); return true; };",
-      "window.onunhandledrejection = (event) => __mtSend('error', String(event.reason));"
+      "window.onunhandledrejection = (event) => __mtSend('error', String(event.reason));",
+      "let __mtInputNumber = 0;",
+      "const __mtPending = new Map();",
+      "window.addEventListener('message', event => {",
+      "  if (event.source !== parent || !event.data || event.data.kind !== 'mt-class-input-response' || event.data.token !== __mtToken) return;",
+      "  const item = __mtPending.get(event.data.requestId);",
+      "  if (!item) return;",
+      "  __mtPending.delete(event.data.requestId);",
+      "  if (event.data.cancelled) item.reject(new Error('Input cancelled'));",
+      "  else item.resolve(String(event.data.value).slice(0, 500));",
+      "});",
+      "function readLine(question = '') {",
+      "  const id = ++__mtInputNumber;",
+      "  if (id > 1000) return Promise.reject(new Error('Too many input requests'));",
+      "  return new Promise((resolve, reject) => {",
+      "    __mtPending.set(id, { resolve, reject });",
+      "    __mtSend('input-request', String(question).slice(0, 300), id);",
+      "  });",
+      "}",
+      "const input = readLine;",
+      "async function readInt(question = 'Enter a whole number:') {",
+      "  while (true) {",
+      "    const result = (await readLine(question)).trim();",
+      "    const value = Number(result);",
+      "    if (/^[+-]?\\d+$/.test(result) && Number.isSafeInteger(value)) return value;",
+      "    console.log('Please enter a valid whole number.');",
+      "  }",
+      "}",
+      "async function readFloat(question = 'Enter a number:') {",
+      "  while (true) {",
+      "    const result = (await readLine(question)).trim();",
+      "    const value = Number(result);",
+      "    if (/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$/.test(result) && Number.isFinite(value)) return value;",
+      "    console.log('Please enter a valid number.');",
+      "  }",
+      "}"
     ].join("\n");
     // Neutralize HTML script closing tags in user code.
     const safeCode = code.replace(/<\/script/gi, "<\\/script");
-    const embedded = "<script>" + bridge + "<\/script><script>" + safeCode;
+    // Async wrapper lets students use await readLine/readInt/readFloat without eval.
+    const program = "async function __mtStudentMain() {\\n" + safeCode +
+      "\\n}\\n__mtStudentMain().catch(error => console.error(error.name + ': ' + error.message));";
+    const embedded = "<script>" + bridge + "<\/script><script>" + program;
     const markup = "<!doctype html><html><head><meta charset=\"utf-8\">" + sandboxCsp() +
       "<style>body{margin:0;padding:16px;font:13px system-ui;background:#f7fbfd;color:#16324a}canvas{display:block;width:100%;max-width:600px;height:auto;background:white;border:1px solid #cfdae1;border-radius:8px}</style></head>" +
       "<body><canvas id=\"stage\" width=\"600\" height=\"320\" tabindex=\"0\" aria-label=\"JavaScript canvas\"></canvas>" +
       embedded + "<\/script></body></html>";
     elements.frame.srcdoc = markup;
     elements.badge.textContent = "Running";
-    elements.output.textContent = "Your program ran. Console messages will appear here.";
+    elements.output.textContent = "Running JavaScript… use await readLine(), readInt(), or readFloat() for terminal input.";
   }
 
   function downloadFile(filename, contents, mime) {
@@ -535,6 +637,13 @@
     $("download-code").addEventListener("click", downloadCurrent);
     $("reset-code").addEventListener("click", resetCurrent);
     $("clear-output").addEventListener("click", function () { clearOutput("Output cleared. Run the program again when ready."); });
+    elements.inputForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+      submitTerminalInput(false);
+    });
+    $("terminal-cancel").addEventListener("click", function () {
+      submitTerminalInput(true);
+    });
     elements.finish.addEventListener("click", toggleFinished);
     $("export-work").addEventListener("click", exportBackup);
     $("import-work").addEventListener("click", function () { $("backup-file").click(); });
@@ -549,6 +658,10 @@
       if (!runToken || event.source !== elements.frame.contentWindow) return;
       const data = event.data;
       if (!data || data.kind !== "mt-class-output" || data.token !== runToken) return;
+      if (data.type === "input-request") {
+        requestTerminalInput(data);
+        return;
+      }
       appendOutput(String(data.value).slice(0, 2000), data.type === "error");
     });
     window.addEventListener("pagehide", saveCurrentDraft);
