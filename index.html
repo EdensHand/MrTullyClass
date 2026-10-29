@@ -70,6 +70,12 @@
         <div class="topbar-location"><span class="crumb">Classroom</span><span class="crumb-sep">/</span><strong id="current-course-label">CS Fundamentals</strong></div>
         <div class="topbar-actions">
           <span class="status-pill"><span class="status-dot"></span>No account needed</span>
+          <button type="button" class="backend-status" id="backend-status" data-state="idle"
+                  title="Check Render backend connection (status check only; code still runs in your browser)">
+            <span class="backend-status-dot" aria-hidden="true"></span>
+            <span id="backend-status-text" role="status" aria-live="polite">Render: Not checked</span>
+            <span class="backend-status-refresh" aria-hidden="true">↻</span>
+          </button>
           <button type="button" class="outline-button compact" id="topbar-help">Help &amp; saving</button>
           <button type="button" class="outline-button compact" id="import-work">Import backup</button>
           <button type="button" class="outline-button compact" id="export-work">Back up work ↓</button>
