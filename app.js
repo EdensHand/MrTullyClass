@@ -10,6 +10,7 @@
   const finishedPrefix = storagePrefix + "finished:";
   const courseKey = storagePrefix + "course";
   const sidebarKey = storagePrefix + "sidebarCollapsed";
+  const runtimeModeKey = storagePrefix + "javascriptRuntimeMode";
   const splitterKey = storagePrefix + "editorSplitPercent";
   const maximumCodeSize = 100000;
   let canStore = true;
@@ -30,6 +31,7 @@
     summary: $("lesson-summary"), steps: $("lesson-steps"),
     objectives: $("lesson-objectives"), stretch: $("lesson-stretch"),
     editor: $("code-editor"), status: $("save-status"),
+    runtimeMode: $("js-runtime-mode"),
     file: $("file-name"), run: $("run-code"), finish: $("complete-button"),
     output: $("console-output"), preview: $("preview-surface"),
     frame: $("preview-frame"), badge: $("result-badge"),
@@ -233,13 +235,15 @@
     elements.editor.value = saved === null ? lesson.code : saved;
     setStatus(saved === null ? "Starter loaded" : "Saved draft loaded");
     $("dirty-dot").hidden = true;
+    elements.runtimeMode.hidden = lesson.type !== "javascript";
+    document.querySelector(".runtime-mode-label").hidden = lesson.type !== "javascript";
     elements.run.disabled = lesson.type === "java";
     elements.run.textContent = lesson.type === "html" ? "▶ Preview page" : lesson.type === "java" ? "Java: download to run" : "▶ Run code";
     elements.resultLabel.textContent = lesson.type === "html" ? "Webpage preview" : lesson.type === "java" ? "Java source" : "Program output";
     elements.note.textContent = lesson.type === "java"
       ? "Java code can be edited and downloaded here. This pilot does not compile or execute Java."
       : lesson.type === "javascript"
-        ? "Interactive input: const name = await readLine('Your name?'); or await readInt('Your age?'). No login or server submissions."
+        ? "Browser-native JavaScript execution: ES modules allow top-level await, and classic scripts support regular browser code. Network access is restricted by the sandbox."
         : "Webpage previews run in a restricted frame. Your code is not uploaded or submitted to a server.";
     elements.finish.setAttribute("aria-pressed", String(isFinished(id)));
     elements.finish.textContent = isFinished(id) ? "✓ Finished locally" : "✓ Mark finished";
@@ -338,6 +342,7 @@
       appendOutput("This program is too large to run in the pilot. Download the file instead.", true);
       return;
     }
+    const mode = elements.runtimeMode.value === "classic" ? "classic" : "module";
     const isHtml = currentLesson.type === "html";
     const isVisual = currentLesson.id === "cs3-canvas" || currentLesson.id === "cs3-movement";
     elements.preview.hidden = !(isHtml || isVisual);
@@ -403,21 +408,22 @@
     ].join("\n");
     // Neutralize HTML script closing tags in user code.
     const safeCode = code.replace(/<\/script/gi, "<\\/script");
-    // Async wrapper lets students use await readLine/readInt/readFloat without eval.
-    const program = [
-      "async function __mtStudentMain() {",
-      safeCode,
-      "}",
-      "__mtStudentMain().catch(error => console.error(error.name + ': ' + error.message));"
-    ].join("\n");
-    const embedded = "<script>" + bridge + "<\/script><script>" + program;
+    // Execute the student's original source, not a function-wrapped subset.
+    // Browser-native ES modules support top-level await, while classic scripts
+    // preserve traditional script semantics.
+    const studentScript = mode === "classic"
+      ? "<script>" + safeCode + "<\/script>"
+      : "<script type=\"module\">" + safeCode + "<\/script>";
+    const embedded = "<script>" + bridge + "<\/script>" + studentScript;
     const markup = "<!doctype html><html><head><meta charset=\"utf-8\">" + sandboxCsp() +
       "<style>body{margin:0;padding:16px;font:13px system-ui;background:#f7fbfd;color:#16324a}canvas{display:block;width:100%;max-width:600px;height:auto;background:white;border:1px solid #cfdae1;border-radius:8px}</style></head>" +
       "<body><canvas id=\"stage\" width=\"600\" height=\"320\" tabindex=\"0\" aria-label=\"JavaScript canvas\"></canvas>" +
       embedded + "<\/script></body></html>";
     elements.frame.srcdoc = markup;
     elements.badge.textContent = "Running";
-    elements.output.textContent = "Running JavaScript… use await readLine(), readInt(), or readFloat() for terminal input.";
+    elements.output.textContent = mode === "module"
+      ? "Running ES module JavaScript. Top-level await and optional readLine/readInt/readFloat are available."
+      : "Running classic JavaScript. Use an async function if you want to await terminal input.";
   }
 
   function downloadFile(filename, contents, mime) {
@@ -637,6 +643,10 @@
         runCode();
       }
     });
+    elements.runtimeMode.addEventListener("change", function () {
+      writeStorage(runtimeModeKey, elements.runtimeMode.value);
+      clearOutput("Execution mode changed. Press Run to execute the program again.");
+    });
     elements.run.addEventListener("click", runCode);
     $("download-code").addEventListener("click", downloadCurrent);
     $("reset-code").addEventListener("click", resetCurrent);
@@ -689,6 +699,7 @@
     if (readStorage(sidebarKey) === "yes") {
       document.querySelector(".app-shell").classList.add("sidebar-collapsed");
     }
+    elements.runtimeMode.value = readStorage(runtimeModeKey) === "classic" ? "classic" : "module";
     syncSidebarToggle();
     initSplitWorkspace();
     listen();
