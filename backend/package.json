@@ -1,0 +1,13 @@
+{
+  "name": "mrtullyclass-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Render-ready health check for the MrTullyClass backend pilot",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  }
+}
