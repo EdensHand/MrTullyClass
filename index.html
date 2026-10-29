@@ -187,6 +187,17 @@
                 <iframe title="Sandboxed program preview" id="preview-frame" sandbox="allow-scripts" referrerpolicy="no-referrer"></iframe>
               </div>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
+              <form id="terminal-input-form" class="terminal-input-form" hidden autocomplete="off">
+                <label id="terminal-input-label" for="terminal-input">Program is requesting input:</label>
+                <div class="terminal-input-row">
+                  <span class="terminal-prompt" aria-hidden="true">&gt;</span>
+                  <input id="terminal-input" type="text" spellcheck="false" autocomplete="off"
+                         maxlength="500" aria-describedby="terminal-input-help" placeholder="Type your answer and press Enter">
+                  <button type="submit" class="terminal-send">Enter ↵</button>
+                  <button type="button" id="terminal-cancel" class="terminal-cancel">Cancel</button>
+                </div>
+                <span id="terminal-input-help" class="terminal-input-help">This answer goes to your running program, not to your teacher. Do not enter passwords or private information.</span>
+              </form>
               <p class="run-note" id="run-note">JavaScript runs in an isolated preview frame. Your edits are not sent to a server.</p>
               </div>
             </div>
