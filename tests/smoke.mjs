@@ -39,7 +39,7 @@ for (const type of allowedTypes) {
 for (const id of ["assignment-list", "code-editor", "run-code", "preview-frame", "download-code", "export-work", "backup-file"]) {
   assert.ok(html.includes('id="' + id + '"'), "Required element is missing: " + id);
 }
-assert.ok(html.includes('sandbox="allow-scripts"'), "Preview iframe must be sandboxed without allow-same-origin");
+assert.ok(html.includes('sandbox="allow-scripts allow-modals"'), "Preview must allow scripts and native prompt dialogs without allow-same-origin");
 assert.ok(html.includes('src="./assignments.js"') && html.includes('src="./app.js"'), "Local JavaScript source files must load");
 assert.ok(css.includes("@media") && css.includes(":focus-visible"), "Expected responsive/focus styles");
 assert.ok(appJs.includes("localStorage") && appJs.includes("downloadFile"), "Expected saving and export features");
