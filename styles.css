@@ -228,3 +228,226 @@ main { max-width: 1600px; margin: 0 auto; padding: 28px clamp(23px, 4vw, 62px) 2
   main { padding: 0; }
   .studio-head, .lesson-details { box-shadow: none; }
 }
+
+/* Slate theme + collapsible navigation (v0.2)
+   Charcoal surfaces and cool mid-gray panels keep the workspace easy on the eyes.
+   Teal accents mark active navigation and actions. */
+:root {
+  color-scheme: dark;
+  --navy: #1e232b;
+  --navy-soft: #303943;
+  --ink: #edf2f6;
+  --muted: #b1c0cc;
+  --teal: #79dfd4;
+  --mint: #79dfd4;
+  --paper: #242a32;
+  --white: #323a44;
+  --line: #4c5865;
+  --shadow: 0 12px 34px rgba(5, 11, 18, .17);
+}
+body { background: var(--paper); color: var(--ink); }
+.sidebar {
+  background: #1b2028;
+  border-right: 1px solid #39444f;
+  color: #ecf3f8;
+  transition: width .2s ease, flex-basis .2s ease;
+}
+.sidebar-head { display: flex; align-items: center; gap: 8px; margin: 0 4px 36px; }
+.sidebar-head .brand { flex: 1; min-width: 0; margin: 0; }
+.brand-mark { flex-shrink: 0; background: linear-gradient(140deg, #318b91, #1f6979); box-shadow: 0 6px 15px rgba(0,0,0,.19); }
+.brand-name { color: #f1f5f8; }
+.brand-name > span { color: #9af2e0; }
+.brand-name small, .sidebar-label { color: #a4b5c3; }
+.sidebar-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #455563;
+  border-radius: 9px;
+  background: #2c3540;
+  color: #d8e5ee;
+  transition: background .15s ease, border-color .15s ease;
+}
+.sidebar-toggle:hover { background: #3a4855; border-color: #77969a; }
+.sidebar-toggle .toggle-chevron { transform-origin: 13.5px 12px; transition: transform .18s ease; }
+.sidebar-collapsed .sidebar-toggle .toggle-chevron { transform: rotate(180deg); }
+.course-button { color: #d9e3ed; }
+.course-button:hover { background: #303944; }
+.course-button.active { background: #34494d; border-color: #548b87; }
+.course-symbol.csf { background: #225154; color: #a7efe3; }
+.course-symbol.cs3 { background: #41445c; color: #ddd5ff; }
+.course-symbol.ap { background: #59423f; color: #ffcebd; }
+.course-copy small, .course-arrow { color: #a3b5c1; }
+.sidebar-info { background: #262e38; border-color: #485663; }
+.sidebar-info strong { color: #e9f1f5; }
+.sidebar-info p { color: #b5c3ce; }
+.sidebar .text-button { color: #98ece2; }
+.sidebar-bottom { color: #a8bac6; }
+.version-tag { color: #a4eadb; }
+
+.topbar {
+  background: #2b323c;
+  border-bottom-color: var(--line);
+}
+.crumb { color: #b1bfcb; }
+.crumb-sep { color: #899ca9; }
+.status-pill {
+  background: #2e4744;
+  border: 1px solid #3b6660;
+  color: #c6f5e8;
+}
+.outline-button {
+  background: #3b4550;
+  border-color: #5a6774;
+  color: #e8f0f6;
+}
+.outline-button:hover { background: #4a5763; }
+.hero {
+  background: linear-gradient(111deg, #373e49 0%, #343e47 57%, #315251 100%);
+  box-shadow: 0 15px 30px rgba(6,11,16,.16);
+}
+.hero::before {
+  background: radial-gradient(circle, rgba(121,223,212,.12), transparent 66%);
+}
+.eyebrow, .hero h1 em, .fact-icon { color: #a0f1df; }
+.eyebrow-line { background: #a0f1df; }
+.hero p, .hero-facts { color: #dce7eb; }
+.art-window {
+  background: #191f29;
+  border-color: #687883;
+  box-shadow: 0 17px 39px rgba(0,0,0,.21);
+}
+.art-top { border-bottom-color: #394553; }
+.art-code { color: #e4eaf1; }
+.section-kicker, .lesson-kicker { color: #91e3d9; }
+.section-heading p { color: var(--muted); }
+.progress-chip {
+  background: #304b49;
+  border-color: #507b73;
+  color: #ccf8e8;
+}
+
+.library-panel, .studio-head, .lesson-details, .result-card {
+  background: var(--white);
+  border-color: var(--line);
+}
+.library-search {
+  background: #282f38;
+  color: #b2c2ce;
+  border-color: #505c68;
+}
+.library-search input { color: var(--ink); }
+.library-search input::placeholder { color: #a8b6c1; }
+.unit-select {
+  background: #2c343e;
+  color: #e0ebf1;
+  border-color: #576470;
+}
+.lesson-count { color: #b7c6d2; }
+.assignment-item { background: #323a44; color: var(--ink); }
+.assignment-item:hover { background: #3f4a55; }
+.assignment-item.active {
+  background: #305451;
+  border-color: #5a9991;
+}
+.assignment-icon { background: #425260; color: #e3f1fa; }
+.assignment-item.active .assignment-icon { background: #3e7770; color: #e4fff5; }
+.assignment-meta { color: #b4c6d1; }
+.assignment-item .checkmark { color: #a5f2d8; }
+.lesson-chevron { color: #b4c6d1; }
+.empty-list, .library-tip { color: #b5c4ce; }
+.details-icon { color: #94e2d6; }
+.difficulty-tag {
+  background: #424c58;
+  color: #e5edf4;
+}
+.mission-steps li { color: #e0e8ee; }
+.mission-steps li::before { background: #375d59; color: #c0f4e7; }
+.goals-row { border-top-color: #56616d; }
+.goal-block ul { color: #c9d7e0; }
+.stretch-block { background: #3a4752; }
+.stretch-block h3 { color: #9fe8e1; }
+.stretch-block p { color: #d7e3e9; }
+.studio-head p { color: #c8d6df; }
+.complete-button[aria-pressed="true"] {
+  background: #31564c;
+  border-color: #548c78;
+  color: #d4f7e6;
+}
+.editor-card { background: #181e26; border-color: #4c5a68; }
+.editor-toolbar { background: #2b3440; border-bottom-color: #4b5966; }
+.file-tab { background: #394551; color: #eaf2f6; }
+.toolbar-action {
+  background: #3b4753;
+  border-color: #62717c;
+  color: #e4edf4;
+}
+.toolbar-action:hover { background: #4a5966; }
+.save-status { color: #b8eee2; }
+.run-button {
+  background: linear-gradient(145deg, #288f8f, #247781);
+  color: #fff;
+}
+#code-editor { background: #1b222b; color: #f1f4f8; }
+.editor-bottom { background: #252e38; border-top-color: #485764; color: #bdced9; }
+.result-card .text-button { color: #a1eae2; }
+.result-spark { color: #8de1d5; }
+.result-badge { background: #495460; color: #e4edf4; }
+.console-output { background: #1d2630; color: #e7edf5; }
+.run-note { color: #b2c2cc; }
+.preview-surface { border-color: #63707a; background: #fff; }
+.footer { color: #aebec9; border-top-color: var(--line); }
+.help-dialog {
+  color: var(--ink);
+  background: #343d47;
+  border-color: #62717d;
+}
+.help-dialog p { color: #d2dee7; }
+.close-button { background: #4d5966; color: #edf3f6; }
+.toast { background: #233f48; color: #f0fffc; }
+.text-button { color: #9dece2; }
+
+/* Desktop: a narrow icon rail; course buttons stay accessible through labels/tooltips. */
+@media (min-width: 951px) {
+  .app-shell.sidebar-collapsed .sidebar {
+    flex-basis: 82px;
+    width: 82px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .sidebar-collapsed .sidebar-head {
+    flex-direction: column;
+    gap: 13px;
+    margin: 0 0 22px;
+  }
+  .sidebar-collapsed .sidebar-head .brand { flex: none; }
+  .sidebar-collapsed .brand-mark { width: 42px; height: 42px; }
+  .sidebar-collapsed .brand-name,
+  .sidebar-collapsed .sidebar-label,
+  .sidebar-collapsed .course-copy,
+  .sidebar-collapsed .course-arrow,
+  .sidebar-collapsed .sidebar-info,
+  .sidebar-collapsed .sidebar-bottom { display: none; }
+  .sidebar-collapsed .course-button {
+    justify-content: center;
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 9px 4px;
+  }
+  .sidebar-collapsed .course-symbol { flex-basis: auto; width: 39px; }
+}
+
+/* Smaller displays: toggle opens or closes the entire course button row. */
+@media (max-width: 950px) {
+  .sidebar-head { margin: 0 0 12px; }
+  .sidebar-head .brand { margin: 0; }
+  .sidebar-toggle { margin-left: auto; }
+  .app-shell.sidebar-collapsed .course-nav { display: none; }
+  .app-shell.sidebar-collapsed .sidebar { padding-bottom: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .sidebar-toggle, .sidebar-toggle .toggle-chevron { transition: none; }
+}
