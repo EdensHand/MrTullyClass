@@ -20,6 +20,36 @@ window.MT_ASSIGNMENTS = [
     ].join("\n")
   },
   {
+    id: "csf-user-input", course: "CSF", type: "javascript",
+    unit: "Getting Started", title: "Interactive Conversation",
+    time: "Beginner", label: "User input",
+    summary: "Ask someone a question and make your program react to what they type.",
+    objectives: [
+      "Use await readLine() to get a text response.",
+      "Use await readInt() to get a whole number.",
+      "Include user input in a calculation and a message."
+    ],
+    steps: [
+      "Press Run. Answer both questions in the output panel.",
+      "Change the first question to something original.",
+      "Ask for a second whole number and print the sum of both numbers.",
+      "Use await readFloat() to ask for a decimal, then display the result."
+    ],
+    stretch: "Build a two-question quiz with different responses for correct and incorrect answers.",
+    code: [
+      "// This program asks the user questions in the output panel.",
+      "// Use await so the program waits for each answer.",
+      "const name = await readLine(\"What name should I call you?\");",
+      "const favoriteNumber = await readInt(\"Choose a whole number:\");",
+      "",
+      "console.log(\"Hello, \" + name + \"!\");",
+      "console.log(\"Twice your number is \" + (favoriteNumber * 2));",
+      "",
+      "// TODO: Ask for another whole number and print the sum.",
+      "// TODO: Try readFloat() to accept a decimal number."
+    ].join("\n")
+  },
+  {
     id: "csf-scoreboard", course: "CSF", type: "javascript",
     unit: "Programming Basics", title: "Scoreboard Lab",
     time: "Beginner", label: "Variables",
