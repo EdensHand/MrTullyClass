@@ -64,4 +64,12 @@ assert.ok(appJs.includes('https://mrtullyclass-backend.onrender.com/health') && 
 assert.ok(appJs.includes('data.codeExecutionEnabled !== false') && appJs.includes('credentials: "omit"'), "Health check must verify backend response without credentials");
 assert.ok(appJs.includes('button.addEventListener') || appJs.includes('"backend-status").addEventListener("click", checkBackendHealth)'), "Backend health status must be retryable");
 assert.ok(css.includes('.backend-status[data-state="connected"]'), "Connection-state styling is required");
+assert.ok(html.includes('value="node"') && html.includes('id="node-stop"'), "Node.js mode and stop button must exist");
+assert.ok(appJs.includes('function runNodeCode(code)') &&
+          appJs.includes('new WebSocket(socketUrl)') &&
+          appJs.includes('type: "stdin"') &&
+          appJs.includes('type: "run"'), "Node.js WebSocket runner and stdin must exist");
+assert.ok(appJs.includes('if (!runnerAvailable)') && appJs.includes("nodeAccessKey"),
+          "Node.js must require an enabled server and an access key");
+assert.ok(css.includes(".terminal-input-form[hidden]"), "Hidden terminal input form must stay hidden");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
