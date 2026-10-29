@@ -43,4 +43,8 @@ assert.ok(html.includes('sandbox="allow-scripts"'), "Preview iframe must be sand
 assert.ok(html.includes('src="./assignments.js"') && html.includes('src="./app.js"'), "Local JavaScript source files must load");
 assert.ok(css.includes("@media") && css.includes(":focus-visible"), "Expected responsive/focus styles");
 assert.ok(appJs.includes("localStorage") && appJs.includes("downloadFile"), "Expected saving and export features");
+assert.ok(html.includes('id="sidebar-toggle"') && html.includes('aria-controls="course-navigation"'), "Expected accessible sidebar toggle");
+assert.ok(html.includes('id="topbar-help"'), "Help should remain available when sidebar is collapsed");
+assert.ok(css.includes(".sidebar-collapsed") && css.includes("--paper: #242a32"), "Expected collapsible graphite theme");
+assert.ok(appJs.includes("syncSidebarToggle") && appJs.includes("sidebarKey"), "Expected persisted responsive sidebar state");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
