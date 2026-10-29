@@ -1,5 +1,5 @@
-/* MrTullyClass student pilot — no authentication or network submission.
-   All project state is kept in the browser until downloaded/exported. */
+/* MrTullyClass — single Node.js terminal pilot. Student source and terminal input
+   are sent to Render/E2B only when running; drafts stay on this device. */
 (function () {
   "use strict";
 
@@ -10,7 +10,6 @@
   const finishedPrefix = storagePrefix + "finished:";
   const courseKey = storagePrefix + "course";
   const sidebarKey = storagePrefix + "sidebarCollapsed";
-  const runtimeModeKey = storagePrefix + "javascriptRuntimeMode";
   const splitterKey = storagePrefix + "editorSplitPercent";
   const maximumCodeSize = 100000;
   const backendHealthUrl = "https://mrtullyclass-backend.onrender.com/health";
@@ -20,14 +19,11 @@
   let currentLesson = null;
   let saveTimer = null;
   let toastTimer = null;
-  let runToken = null;
   let outputCount = 0;
   let nodeSocket = null;
   let nodeState = "idle";
   let nodeAccessKey = null;
   let runnerAvailable = false;
-  let pendingInput = null;
-  let inputQueue = [];
 
   const $ = function (id) { return document.getElementById(id); };
   const elements = {
@@ -37,10 +33,8 @@
     summary: $("lesson-summary"), steps: $("lesson-steps"),
     objectives: $("lesson-objectives"), stretch: $("lesson-stretch"),
     editor: $("code-editor"), status: $("save-status"),
-    runtimeMode: $("js-runtime-mode"),
     file: $("file-name"), run: $("run-code"), finish: $("complete-button"),
-    output: $("console-output"), preview: $("preview-surface"),
-    frame: $("preview-frame"), badge: $("result-badge"),
+    output: $("console-output"), badge: $("result-badge"),
     resultLabel: $("result-label"), note: $("run-note"),
     stats: $("editor-stats"), progress: $("progress-summary"),
     courseLabel: $("current-course-label"),
@@ -88,10 +82,17 @@
 
   function setStatus(message) { elements.status.textContent = message; }
 
+  function isRunnableLesson(lesson) {
+    return !!lesson && lesson.type === "javascript" &&
+      lesson.id !== "cs3-canvas" && lesson.id !== "cs3-movement";
+  }
+
   function closeNodeConnection() {
     const old = nodeSocket;
     nodeSocket = null;
     nodeState = "idle";
+    elements.inputForm.hidden = true;
+    elements.inputField.value = "";
     const stop = $("node-stop");
     stop.hidden = true;
     stop.disabled = true;
@@ -109,13 +110,6 @@
 
   function clearOutput(message) {
     closeNodeConnection();
-    inputQueue = [];
-    pendingInput = null;
-    elements.inputForm.hidden = true;
-    elements.inputField.value = "";
-    runToken = null;
-    elements.frame.removeAttribute("srcdoc");
-    elements.preview.hidden = true;
     elements.output.classList.remove("error");
     elements.output.textContent = message || "Run your program to see its output here.";
     elements.badge.textContent = "Not run";
@@ -255,25 +249,26 @@
     lesson.objectives.forEach(function (s) { elements.objectives.append(makeNode("li", "", s)); });
     elements.stretch.textContent = lesson.stretch;
     $("difficulty-tag").textContent = lesson.time;
+    const canRun = isRunnableLesson(lesson);
     const ext = lesson.type === "html" ? "html" : lesson.type === "java" ? "java" : "js";
-    elements.file.textContent = lesson.type === "java" ? "Main.java" : lesson.id + "." + ext;
+    elements.file.textContent = canRun ? "main.js" : lesson.type === "java" ? "Main.java" : lesson.id + "." + ext;
     const saved = readStorage(draftPrefix + id);
     elements.editor.value = saved === null ? lesson.code : saved;
     setStatus(saved === null ? "Starter loaded" : "Saved draft loaded");
     $("dirty-dot").hidden = true;
-    elements.runtimeMode.hidden = lesson.type !== "javascript";
-    document.querySelector(".runtime-mode-label").hidden = lesson.type !== "javascript";
-    elements.run.disabled = lesson.type === "java";
-    elements.run.textContent = lesson.type === "html" ? "▶ Preview page" : lesson.type === "java" ? "Java: download to run" : "▶ Run code";
-    elements.resultLabel.textContent = lesson.type === "html" ? "Webpage preview" : lesson.type === "java" ? "Java source" : "Program output";
-    elements.note.textContent = lesson.type === "java"
-      ? "Java code can be edited and downloaded here. This pilot does not compile or execute Java."
-      : lesson.type === "javascript"
-        ? "Browser-native JavaScript execution: ES modules allow top-level await, and classic scripts support regular browser code. Network access is restricted by the sandbox."
-        : "Webpage previews run in a restricted frame. Your code is not uploaded or submitted to a server.";
+    elements.run.disabled = !canRun;
+    elements.run.textContent = canRun ? "▶ Run code" : "Editing only";
+    elements.resultLabel.textContent = "Node.js terminal";
+    elements.note.textContent = canRun
+      ? "Your main.js executes in an isolated Node.js sandbox through Render. Code and terminal input are transmitted for execution."
+      : lesson.type === "java"
+        ? "Java assignments are edit/download only. The Node.js terminal runs JavaScript, not Java."
+        : "Graphics and webpage previews are on hold until a separate graphics environment is designed.";
     elements.finish.setAttribute("aria-pressed", String(isFinished(id)));
     elements.finish.textContent = isFinished(id) ? "✓ Finished locally" : "✓ Mark finished";
-    clearOutput(lesson.type === "java" ? "Download Main.java and run it using your teacher-approved Java environment." : "Press Run to see your output here.");
+    clearOutput(canRun
+      ? "Press Run to execute main.js in the Node.js terminal."
+      : "This lesson can be edited and downloaded, but it is not supported by the Node.js terminal.");
     editorStats();
     renderAssignmentList();
     progress();
@@ -284,12 +279,6 @@
     }
   }
 
-  function formatValue(value) {
-    if (typeof value === "string") return value;
-    if (value instanceof Error) return value.name + ": " + value.message;
-    try { return JSON.stringify(value); } catch (error) { return String(value); }
-  }
-
   function appendOutput(message, isError) {
     if (outputCount >= 100) return;
     if (outputCount === 0) elements.output.textContent = "";
@@ -298,59 +287,6 @@
     elements.output.textContent = next.slice(-20000);
     if (isError) elements.output.classList.add("error");
     elements.badge.textContent = isError ? "Error" : "Ran";
-  }
-
-  // Requests are associated with a specific isolated preview run.
-  // Queueing also supports programs that request more than one value at a time.
-  function showNextInput() {
-    if (pendingInput || !inputQueue.length || !runToken) return;
-    pendingInput = inputQueue.shift();
-    elements.inputLabel.textContent = pendingInput.prompt || "Your program is waiting for input:";
-    elements.inputField.value = "";
-    elements.inputForm.hidden = false;
-    elements.badge.textContent = "Waiting for input";
-    elements.inputField.focus();
-  }
-
-  function requestTerminalInput(data) {
-    if (typeof data.requestId !== "number" ||
-        !Number.isSafeInteger(data.requestId) || data.requestId < 1 ||
-        data.requestId > 1000 || inputQueue.length > 50) {
-      appendOutput("Too many input requests.", true);
-      return;
-    }
-    inputQueue.push({
-      token: runToken,
-      requestId: data.requestId,
-      prompt: typeof data.value === "string" ? data.value.slice(0, 300) : ""
-    });
-    showNextInput();
-  }
-
-  function submitTerminalInput(cancelled) {
-    if (!pendingInput || !runToken || pendingInput.token !== runToken) return;
-    const request = pendingInput;
-    const value = elements.inputField.value.slice(0, 500);
-    pendingInput = null;
-    elements.inputForm.hidden = true;
-    elements.inputField.value = "";
-
-    if (!cancelled) {
-      appendOutput("> " + (request.prompt ? request.prompt + " " : "") + value, false);
-    }
-    // The sandbox has an opaque origin; verify the token and source in each direction.
-    if (elements.frame.contentWindow) {
-      elements.frame.contentWindow.postMessage({
-        kind: "mt-class-input-response",
-        token: request.token,
-        requestId: request.requestId,
-        value: value,
-        cancelled: !!cancelled
-      }, "*");
-    }
-    if (cancelled) appendOutput("Input cancelled.", true);
-    else elements.badge.textContent = "Running";
-    showNextInput();
   }
 
   // Node.js source is executed remotely in a separate E2B sandbox, never on Render.
@@ -369,13 +305,13 @@
 
   function runNodeCode(code) {
     if (!runnerAvailable) {
-      appendOutput("Node.js execution is not enabled on Render yet. An instructor must configure E2B_API_KEY and RUNNER_ACCESS_TOKEN in the Render service settings. Browser JavaScript mode remains available.", true);
+      appendOutput("Node.js is not ready: an instructor must configure E2B_API_KEY and RUNNER_ACCESS_TOKEN in Render and verify the health check.", true);
       return;
     }
     if (!nodeAccessKey) {
       const supplied = window.prompt("Instructor test access: enter RUNNER_ACCESS_TOKEN from Render (NOT your E2B API key). Do not share this key with students.");
       if (supplied === null) {
-        appendOutput("Node.js run cancelled. Select Browser JavaScript for local execution.", false);
+        appendOutput("Node.js run cancelled. The instructor test access key is required.", false);
         return;
       }
       if (supplied.length < 32) {
@@ -455,107 +391,16 @@
     elements.inputField.focus();
   }
 
-  function sandboxCsp() {
-    // Intentionally disallows cross-site connections and external resources.
-    return "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'; form-action 'none'; base-uri 'none'\">";
-  }
-
   function runCode() {
-    if (!currentLesson || currentLesson.type === "java") return;
+    if (!isRunnableLesson(currentLesson)) return;
     saveCurrentDraft();
     clearOutput("");
-    outputCount = 0;
     const code = elements.editor.value;
     if (code.length > maximumCodeSize) {
-      appendOutput("This program is too large to run in the pilot. Download the file instead.", true);
+      appendOutput("This program is too large to run. Download the file instead.", true);
       return;
     }
-    if (elements.runtimeMode.value === "node") {
-      runNodeCode(code);
-      return;
-    }
-    const mode = elements.runtimeMode.value === "classic" ? "classic" : "module";
-    const isHtml = currentLesson.type === "html";
-    const isVisual = currentLesson.id === "cs3-canvas" || currentLesson.id === "cs3-movement";
-    elements.preview.hidden = !(isHtml || isVisual);
-    runToken = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    if (isHtml) {
-      const markup = code;
-      const csp = sandboxCsp();
-      // Insert a restrictive CSP at the start of the document head.
-      const safeMarkup = /<head\b[^>]*>/i.test(markup)
-        ? markup.replace(/<head\b[^>]*>/i, function (match) { return match + csp; })
-        : csp + markup;
-      elements.frame.srcdoc = safeMarkup;
-      appendOutput("Page rendered in the preview above.", false);
-      elements.badge.textContent = "Preview";
-      return;
-    }
-    const token = JSON.stringify(runToken);
-    // Code runs inside the iframe's opaque sandboxed origin, never in the host page.
-    const bridge = [
-      "const __mtToken = " + token + ";",
-      "const __mtSend = (type, value, requestId) => parent.postMessage({kind:'mt-class-output',token:__mtToken,type:type,value:String(value),requestId:requestId}, '*');",
-      "const __mtFmt = value => { if (typeof value === 'string') return value; try { return JSON.stringify(value); } catch (err) { return String(value); } };",
-      "console.log = (...args) => __mtSend('log', args.map(__mtFmt).join(' '));",
-      "console.warn = (...args) => __mtSend('log', args.map(__mtFmt).join(' '));",
-      "console.error = (...args) => __mtSend('error', args.map(__mtFmt).join(' '));",
-      "window.onerror = (msg) => { __mtSend('error', msg); return true; };",
-      "window.onunhandledrejection = (event) => __mtSend('error', String(event.reason));",
-      "let __mtInputNumber = 0;",
-      "const __mtPending = new Map();",
-      "window.addEventListener('message', event => {",
-      "  if (event.source !== parent || !event.data || event.data.kind !== 'mt-class-input-response' || event.data.token !== __mtToken) return;",
-      "  const item = __mtPending.get(event.data.requestId);",
-      "  if (!item) return;",
-      "  __mtPending.delete(event.data.requestId);",
-      "  if (event.data.cancelled) item.reject(new Error('Input cancelled'));",
-      "  else item.resolve(String(event.data.value).slice(0, 500));",
-      "});",
-      "function readLine(question = '') {",
-      "  const id = ++__mtInputNumber;",
-      "  if (id > 1000) return Promise.reject(new Error('Too many input requests'));",
-      "  return new Promise((resolve, reject) => {",
-      "    __mtPending.set(id, { resolve, reject });",
-      "    __mtSend('input-request', String(question).slice(0, 300), id);",
-      "  });",
-      "}",
-      "const input = readLine;",
-      "async function readInt(question = 'Enter a whole number:') {",
-      "  while (true) {",
-      "    const result = (await readLine(question)).trim();",
-      "    const value = Number(result);",
-      "    if (/^[+-]?\\d+$/.test(result) && Number.isSafeInteger(value)) return value;",
-      "    console.log('Please enter a valid whole number.');",
-      "  }",
-      "}",
-      "async function readFloat(question = 'Enter a number:') {",
-      "  while (true) {",
-      "    const result = (await readLine(question)).trim();",
-      "    const value = Number(result);",
-      "    if (/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$/.test(result) && Number.isFinite(value)) return value;",
-      "    console.log('Please enter a valid number.');",
-      "  }",
-      "}"
-    ].join("\n");
-    // Neutralize HTML script closing tags in user code.
-    const safeCode = code.replace(/<\/script/gi, "<\\/script");
-    // Execute the student's original source, not a function-wrapped subset.
-    // Browser-native ES modules support top-level await, while classic scripts
-    // preserve traditional script semantics.
-    const studentScript = mode === "classic"
-      ? "<script>" + safeCode + "<\/script>"
-      : "<script type=\"module\">" + safeCode + "<\/script>";
-    const embedded = "<script>" + bridge + "<\/script>" + studentScript;
-    const markup = "<!doctype html><html><head><meta charset=\"utf-8\">" + sandboxCsp() +
-      "<style>body{margin:0;padding:16px;font:13px system-ui;background:#f7fbfd;color:#16324a}canvas{display:block;width:100%;max-width:600px;height:auto;background:white;border:1px solid #cfdae1;border-radius:8px}</style></head>" +
-      "<body><canvas id=\"stage\" width=\"600\" height=\"320\" tabindex=\"0\" aria-label=\"JavaScript canvas\"></canvas>" +
-      embedded + "<\/script></body></html>";
-    elements.frame.srcdoc = markup;
-    elements.badge.textContent = "Running";
-    elements.output.textContent = mode === "module"
-      ? "Running ES module JavaScript. Top-level await and optional readLine/readInt/readFloat are available."
-      : "Running classic JavaScript. Use an async function if you want to await terminal input.";
+    runNodeCode(code);
   }
 
   function downloadFile(filename, contents, mime) {
@@ -765,10 +610,10 @@
       runnerAvailable = data.codeExecutionEnabled === true;
       if (data.codeExecutionEnabled !== false) {
         setBackendStatus("connected", "Render: Connected",
-          "Backend responded to the health check. Student code still runs locally in the browser. Click to recheck.");
+          "Node.js execution is enabled on the isolated runner. Click to recheck.");
       } else {
-        setBackendStatus("connected", "Render: Online · test only",
-          "Render is responding. This is only a connection test; server code execution is disabled. Click to recheck.");
+        setBackendStatus("connected", "Render: Setup needed",
+          "Render is online, but the Node.js runner still needs its E2B key and instructor access token. Click to recheck.");
       }
     } catch (error) {
       runnerAvailable = false;
@@ -825,10 +670,6 @@
         runCode();
       }
     });
-    elements.runtimeMode.addEventListener("change", function () {
-      writeStorage(runtimeModeKey, elements.runtimeMode.value);
-      clearOutput("Execution mode changed. Press Run to execute the program again.");
-    });
     elements.run.addEventListener("click", runCode);
     $("download-code").addEventListener("click", downloadCurrent);
     $("reset-code").addEventListener("click", resetCurrent);
@@ -836,7 +677,6 @@
     elements.inputForm.addEventListener("submit", function (event) {
       event.preventDefault();
       if (nodeState === "running") sendNodeInput();
-      else submitTerminalInput(false);
     });
     $("terminal-cancel").addEventListener("click", function () {
       if (nodeSocket) {
@@ -844,7 +684,7 @@
         elements.inputForm.hidden = true;
         $("terminal-cancel").textContent = "Cancel";
         closeNodeConnection();
-      } else submitTerminalInput(true);
+      }
     });
     $("node-stop").addEventListener("click", function () {
       if (nodeSocket) {
@@ -865,16 +705,6 @@
     $("open-help").addEventListener("click", function () { $("help-dialog").showModal(); });
     $("close-help").addEventListener("click", function () { $("help-dialog").close(); });
     $("acknowledge-help").addEventListener("click", function () { $("help-dialog").close(); });
-    window.addEventListener("message", function (event) {
-      if (!runToken || event.source !== elements.frame.contentWindow) return;
-      const data = event.data;
-      if (!data || data.kind !== "mt-class-output" || data.token !== runToken) return;
-      if (data.type === "input-request") {
-        requestTerminalInput(data);
-        return;
-      }
-      appendOutput(String(data.value).slice(0, 2000), data.type === "error");
-    });
     window.addEventListener("pagehide", saveCurrentDraft);
     window.addEventListener("hashchange", function () {
       const id = decodeURIComponent(location.hash.slice(1));
@@ -896,7 +726,6 @@
     if (readStorage(sidebarKey) === "yes") {
       document.querySelector(".app-shell").classList.add("sidebar-collapsed");
     }
-    elements.runtimeMode.value = readStorage(runtimeModeKey) === "classic" ? "classic" : "module";
     syncSidebarToggle();
     initSplitWorkspace();
     listen();
