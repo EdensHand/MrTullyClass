@@ -163,12 +163,6 @@
               <div class="editor-toolbar">
                 <div class="file-tab"><span aria-hidden="true" class="file-glyph">{ }</span><span id="file-name">main.js</span><span class="unsaved-circle" id="dirty-dot" hidden title="Saving"></span></div>
                 <div class="toolbar-buttons">
-                  <label class="runtime-mode-label" for="js-runtime-mode">JavaScript mode</label>
-                  <select id="js-runtime-mode" class="runtime-mode-select" aria-label="JavaScript execution mode" title="Choose how the browser interprets your code">
-                    <option value="module">ES module (supports await)</option>
-                    <option value="classic">Classic script</option>
-                    <option value="node">Node.js (isolated terminal)</option>
-                  </select>
                   <span class="save-status" id="save-status" role="status" aria-live="polite">Ready</span>
                   <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
                   <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
@@ -193,25 +187,22 @@
 
               <div class="result-card" id="result-card">
               <div class="result-head">
-                <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">Output</strong><span class="result-badge" id="result-badge">Not run</span></div>
+                <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">Node.js terminal</strong><span class="result-badge" id="result-badge">Not run</span></div>
                 <button type="button" class="text-button" id="clear-output">Clear output</button>
-              </div>
-              <div class="preview-surface" id="preview-surface" hidden>
-                <iframe title="Sandboxed program preview" id="preview-frame" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
               </div>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
               <form id="terminal-input-form" class="terminal-input-form" hidden autocomplete="off">
-                <label id="terminal-input-label" for="terminal-input">Program is requesting input:</label>
+                <label id="terminal-input-label" for="terminal-input">Terminal input (stdin)</label>
                 <div class="terminal-input-row">
                   <span class="terminal-prompt" aria-hidden="true">&gt;</span>
                   <input id="terminal-input" type="text" spellcheck="false" autocomplete="off"
                          maxlength="500" aria-describedby="terminal-input-help" placeholder="Type your answer and press Enter">
                   <button type="submit" class="terminal-send">Enter ↵</button>
-                  <button type="button" id="terminal-cancel" class="terminal-cancel">Cancel</button>
+                  <button type="button" id="terminal-cancel" class="terminal-cancel">Stop program</button>
                 </div>
-                <span id="terminal-input-help" class="terminal-input-help">This answer goes to your running program, not to your teacher. Do not enter passwords or private information.</span>
+                <span id="terminal-input-help" class="terminal-input-help">Your input goes to the isolated Node.js process through Render. Do not enter passwords or personal information.</span>
               </form>
-              <p class="run-note" id="run-note">JavaScript runs in an isolated preview frame. Your edits are not sent to a server.</p>
+              <p class="run-note" id="run-note">Run executes main.js in an isolated Node.js sandbox through Render. Requires instructor setup; source code and terminal input leave this browser.</p>
               </div>
             </div>
           </section>
