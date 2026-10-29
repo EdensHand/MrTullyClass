@@ -38,6 +38,16 @@ The public frontend repository includes [`.github/workflows/keep-render-awake.ym
 - The workflow is in the **public** `MrTullyClass` repository because standard hosted Actions on public repos are free. Do not move a 24/7 schedule into the private backend repo without checking Actions minute charges.
 - To disable these requests, open **Actions → Keep Render backend warm → Disable workflow**. To test it manually, choose **Run workflow**.
 
+## Isolated Node.js terminal (instructor pilot)
+
+The JavaScript execution-mode selector now includes **Node.js (isolated terminal)**. It connects to the Render backend using an authenticated WebSocket (`wss://mrtullyclass-backend.onrender.com/ws`), sends the edited `main.js` file, and streams output to the right-hand terminal. Students can type standard `stdin` lines into the terminal and press Enter; the Stop button ends the run.
+
+This mode is **disabled until you configure both secrets on Render**: `E2B_API_KEY` from [E2B](https://e2b.dev/) and `RUNNER_ACCESS_TOKEN` (a separate 32+-character teacher access secret). The secret is entered when running a Node.js program and kept only in page memory; it is not an assignment or student login. The E2B account may incur usage charges. No student source is sent to Render while the runner is disabled.
+
+For this pilot the isolated runner has 90-second and 100-KB output limits, a maximum of two concurrent runs, 40 runs per server hour, and outbound networking disabled. Do not distribute a shared access token to students or treat this as classroom-ready authentication. Individual student identity, usage controls, and district review are needed before classroom rollout.
+
+The **ES module** and **Classic script** modes remain available for browser JavaScript, DOM, and canvas assignments; they still run locally and do not send source code to Render.
+
 ## Important limits
 
 **This is not yet a learning management system.**
