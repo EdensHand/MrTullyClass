@@ -1,5 +1,6 @@
-/* MrTullyClass — single Node.js terminal pilot. Student source and terminal input
-   are sent to Render/E2B only when running; drafts stay on this device. */
+/* MrTullyClass uses one Node.js terminal, running locally in this browser. */
+import { createBrowserNodeRunner } from "./browser-node.js";
+import "./assignments.js";
 (function () {
   "use strict";
 
@@ -12,18 +13,15 @@
   const sidebarKey = storagePrefix + "sidebarCollapsed";
   const splitterKey = storagePrefix + "editorSplitPercent";
   const maximumCodeSize = 100000;
-  const backendHealthUrl = "https://mrtullyclass-backend.onrender.com/health";
-  const backendHealthTimeoutMs = 70000;
   let canStore = true;
   let currentCourse = "CSF";
   let currentLesson = null;
   let saveTimer = null;
   let toastTimer = null;
   let outputCount = 0;
-  let nodeSocket = null;
+  const browserNode = createBrowserNodeRunner();
   let nodeState = "idle";
-  let nodeAccessKey = null;
-  let runnerAvailable = false;
+  let currentNodeRun = 0;
 
   const $ = function (id) { return document.getElementById(id); };
   const elements = {
@@ -88,24 +86,14 @@
   }
 
   function closeNodeConnection() {
-    const old = nodeSocket;
-    nodeSocket = null;
+    currentNodeRun++;
+    browserNode.stop();
     nodeState = "idle";
     elements.inputForm.hidden = true;
     elements.inputField.value = "";
     const stop = $("node-stop");
     stop.hidden = true;
     stop.disabled = true;
-    if (old) {
-      if (old.readyState === WebSocket.OPEN) {
-        old.send(JSON.stringify({ type: "stop" }));
-        old.close();
-      } else if (old.readyState === WebSocket.CONNECTING) {
-        old.addEventListener("open", function () { old.close(); }, { once: true });
-      } else if (old.readyState !== WebSocket.CLOSED) {
-        old.close();
-      }
-    }
   }
 
   function clearOutput(message) {
@@ -260,7 +248,7 @@
     elements.run.textContent = canRun ? "▶ Run code" : "Editing only";
     elements.resultLabel.textContent = "Node.js terminal";
     elements.note.textContent = canRun
-      ? "Your main.js executes in an isolated Node.js sandbox through Render. Code and terminal input are transmitted for execution."
+      ? "Your main.js runs in a browser-based Node.js environment without a paid execution server."
       : lesson.type === "java"
         ? "Java assignments are edit/download only. The Node.js terminal runs JavaScript, not Java."
         : "Graphics and webpage previews are on hold until a separate graphics environment is designed.";
@@ -289,106 +277,92 @@
     elements.badge.textContent = isError ? "Error" : "Ran";
   }
 
-  // Node.js source is executed remotely in a separate E2B sandbox, never on Render.
-  // The access key stays in this page's memory and is not stored in localStorage.
   function appendNodeChunk(chunk, error) {
-    if (nodeSocket === null) return;
     const target = elements.output;
     if (target.dataset.nodeInitial === "yes") {
       target.textContent = "";
       delete target.dataset.nodeInitial;
     }
-    target.textContent = (target.textContent + String(chunk)).slice(-20000);
+    target.textContent = (target.textContent + String(chunk)).slice(-30000);
     target.scrollTop = target.scrollHeight;
     if (error) target.classList.add("error");
   }
 
-  function runNodeCode(code) {
-    if (!runnerAvailable) {
-      appendOutput("Node.js is not ready: an instructor must configure E2B_API_KEY and RUNNER_ACCESS_TOKEN in Render and verify the health check.", true);
-      return;
-    }
-    if (!nodeAccessKey) {
-      const supplied = window.prompt("Instructor test access: enter RUNNER_ACCESS_TOKEN from Render (NOT your E2B API key). Do not share this key with students.");
-      if (supplied === null) {
-        appendOutput("Node.js run cancelled. The instructor test access key is required.", false);
-        return;
-      }
-      if (supplied.length < 32) {
-        appendOutput("The classroom access token must be at least 32 characters.", true);
-        return;
-      }
-      nodeAccessKey = supplied;
-    }
+  function setNodeStatus(state, label, title) {
+    const pill = $("runtime-status");
+    pill.dataset.state = state;
+    $("runtime-status-text").textContent = label;
+    pill.title = title;
+  }
 
-    const socketUrl = backendHealthUrl.replace(/^https:/, "wss:").replace(/\/health$/, "/ws");
-    let ws;
-    try { ws = new WebSocket(socketUrl); }
-    catch (error) {
-      appendOutput("Could not open the Node.js terminal connection.", true);
-      return;
+  function checkBrowserCompatibility() {
+    if (window.crossOriginIsolated && typeof SharedArrayBuffer !== "undefined") {
+      setNodeStatus("connected", "Node.js: Ready to start",
+        "Click to initialize the free, browser-based Node.js environment.");
+    } else {
+      setNodeStatus("unavailable", "Node.js: Hosting required",
+        "Use the Cloudflare Pages deployment with COOP/COEP headers, in Chrome or Edge.");
     }
-    nodeSocket = ws;
-    nodeState = "connecting";
-    elements.output.textContent = "Connecting to isolated Node.js runner…\n";
+  }
+
+  async function runNodeCode(code) {
+    const runId = ++currentNodeRun;
+    nodeState = "starting";
+    elements.output.textContent = "Starting Node.js inside this browser…\n";
     elements.output.dataset.nodeInitial = "yes";
-    elements.badge.textContent = "Connecting";
+    elements.badge.textContent = "Starting";
     const stop = $("node-stop");
     stop.hidden = false;
     stop.disabled = false;
+    setNodeStatus("checking", "Node.js: Starting", "Initializing WebContainers locally.");
 
-    ws.addEventListener("message", event => {
-      if (ws !== nodeSocket) return;
-      let msg;
-      try { msg = JSON.parse(event.data); } catch { return; }
-      if (!msg || typeof msg.type !== "string") return;
-      if (msg.type === "ready") {
-        ws.send(JSON.stringify({type: "run", code, token: nodeAccessKey}));
-        appendNodeChunk("$ node main.js\n");
-      } else if (msg.type === "status") {
-        elements.badge.textContent = "Running Node.js";
-        if (msg.message === "Running node main.js") {
-          nodeState = "running";
+    await browserNode.run(code, {
+      onState(state) {
+        if (runId !== currentNodeRun) return;
+        nodeState = state;
+        if (state === "running") {
+          elements.badge.textContent = "Running Node.js";
           elements.inputLabel.textContent = "Terminal input (stdin)";
           elements.inputField.value = "";
           elements.inputForm.hidden = false;
           $("terminal-cancel").textContent = "Stop program";
+          setNodeStatus("connected", "Node.js: Running", "Running locally in your browser.");
+          appendNodeChunk("$ node main.js\n");
           elements.inputField.focus();
         }
-      } else if (msg.type === "stdout" || msg.type === "stderr") {
-        appendNodeChunk(msg.data || "", msg.type === "stderr");
-      } else if (msg.type === "error") {
-        appendNodeChunk("\n" + (msg.message || "Runner error") + "\n", true);
-        if ((msg.message || "").includes("access key")) nodeAccessKey = null;
-      } else if (msg.type === "exit") {
-        appendNodeChunk("\n[Process exited" + (msg.code === null ? "" : " with code " + msg.code) + "]\n");
-        elements.badge.textContent = msg.code === 0 ? "Finished" : "Stopped";
-        elements.inputForm.hidden = true;
-        $("terminal-cancel").textContent = "Cancel";
+      },
+      onOutput(text) {
+        if (runId === currentNodeRun) appendNodeChunk(text, false);
+      },
+      onExit(code) {
+        if (runId !== currentNodeRun) return;
+        appendNodeChunk("\n[Process exited with code " + code + "]\n");
+        const badge = code === 0 ? "Finished" : "Exited with error";
         closeNodeConnection();
+        elements.badge.textContent = badge;
+        setNodeStatus("connected", "Node.js: Ready", "No paid execution service.");
+      },
+      onError(message) {
+        if (runId !== currentNodeRun) return;
+        delete elements.output.dataset.nodeInitial;
+        appendNodeChunk("\n" + message + "\n", true);
+        closeNodeConnection();
+        elements.badge.textContent = "Error";
+        setNodeStatus("unavailable", "Node.js: Unavailable", message);
       }
-    });
-    ws.addEventListener("error", () => {
-      if (nodeSocket !== ws) return;
-      appendNodeChunk("\nTerminal connection failed. Check Render and your runner access settings.\n", true);
-      elements.badge.textContent = "Connection error";
-    });
-    ws.addEventListener("close", () => {
-      if (nodeSocket !== ws) return;
-      elements.inputForm.hidden = true;
-      $("terminal-cancel").textContent = "Cancel";
-      appendNodeChunk("\n[Connection closed]\n");
-      closeNodeConnection();
     });
   }
 
-  function sendNodeInput() {
-    if (nodeState !== "running" || !nodeSocket || nodeSocket.readyState !== WebSocket.OPEN) return;
+  async function sendNodeInput() {
+    if (nodeState !== "running") return;
     const value = elements.inputField.value.slice(0, 500);
-    nodeSocket.send(JSON.stringify({type: "stdin", value}));
-    appendNodeChunk(value + "\n");
-    elements.inputField.value = "";
-    elements.inputField.focus();
+    try {
+      await browserNode.sendInput(value);
+      elements.inputField.value = "";
+      elements.inputField.focus();
+    } catch (error) {
+      appendNodeChunk("\nUnable to send terminal input.\n", true);
+    }
   }
 
   function runCode() {
@@ -576,55 +550,6 @@
     setPercent(current, false);
   }
 
-  // Connection check only: never submit code or student information to Render.
-  async function checkBackendHealth() {
-    const button = $("backend-status");
-    const label = $("backend-status-text");
-    if (button.disabled) return;
-
-    function setBackendStatus(state, message, detail) {
-      button.dataset.state = state;
-      label.textContent = message;
-      button.title = detail;
-    }
-
-    button.disabled = true;
-    setBackendStatus("checking", "Render: Connecting…",
-      "Checking the health endpoint. A sleeping Render service may take a little while to wake.");
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(function () { controller.abort(); }, backendHealthTimeoutMs);
-    try {
-      const response = await fetch(backendHealthUrl, {
-        method: "GET",
-        mode: "cors",
-        credentials: "omit",
-        cache: "no-store",
-        signal: controller.signal
-      });
-      if (!response.ok) throw new Error("Server returned HTTP " + response.status);
-      const data = await response.json();
-      if (!data || data.status !== "ok" || data.service !== "MrTullyClass Backend") {
-        throw new Error("Unexpected health-check response");
-      }
-      runnerAvailable = data.codeExecutionEnabled === true;
-      if (data.codeExecutionEnabled !== false) {
-        setBackendStatus("connected", "Render: Connected",
-          "Node.js execution is enabled on the isolated runner. Click to recheck.");
-      } else {
-        setBackendStatus("connected", "Render: Setup needed",
-          "Render is online, but the Node.js runner still needs its E2B key and instructor access token. Click to recheck.");
-      }
-    } catch (error) {
-      runnerAvailable = false;
-      setBackendStatus("unavailable", "Render: Check failed",
-        "Couldn't reach the backend. It may be waking, offline, or blocked by the network. Click to retry.");
-    } finally {
-      clearTimeout(timeoutId);
-      button.disabled = false;
-    }
-  }
-
   function syncSidebarToggle() {
     const shell = document.querySelector(".app-shell");
     const toggle = $("sidebar-toggle");
@@ -649,7 +574,16 @@
     $("sidebar-toggle").addEventListener("click", toggleSidebar);
     window.addEventListener("resize", syncSidebarToggle);
     $("topbar-help").addEventListener("click", function () { $("help-dialog").showModal(); });
-    $("backend-status").addEventListener("click", checkBackendHealth);
+    $("runtime-status").addEventListener("click", async function () {
+      if (!window.crossOriginIsolated) { checkBrowserCompatibility(); return; }
+      setNodeStatus("checking", "Node.js: Starting", "Initializing in-browser Node.js.");
+      try {
+        await browserNode.boot();
+        if (nodeState !== "running") setNodeStatus("connected", "Node.js: Ready", "Runs locally in this browser.");
+      } catch (error) {
+        setNodeStatus("unavailable", "Node.js: Unavailable", error.message);
+      }
+    });
     document.querySelectorAll(".course-button").forEach(function (button) {
       button.addEventListener("click", function () { setCourse(button.dataset.course); });
     });
@@ -676,22 +610,24 @@
     $("clear-output").addEventListener("click", function () { clearOutput("Output cleared. Run the program again when ready."); });
     elements.inputForm.addEventListener("submit", function (event) {
       event.preventDefault();
-      if (nodeState === "running") sendNodeInput();
+      if (nodeState === "running") void sendNodeInput();
     });
     $("terminal-cancel").addEventListener("click", function () {
-      if (nodeSocket) {
+      if (nodeState !== "idle") {
         elements.output.textContent += "\n[Stopped by student]\n";
         elements.inputForm.hidden = true;
         $("terminal-cancel").textContent = "Cancel";
         closeNodeConnection();
+        checkBrowserCompatibility();
       }
     });
     $("node-stop").addEventListener("click", function () {
-      if (nodeSocket) {
+      if (nodeState !== "idle") {
         elements.output.textContent += "\n[Stopped by student]\n";
         elements.inputForm.hidden = true;
         $("terminal-cancel").textContent = "Cancel";
         closeNodeConnection();
+        checkBrowserCompatibility();
         elements.badge.textContent = "Stopped";
       }
     });
@@ -729,7 +665,7 @@
     syncSidebarToggle();
     initSplitWorkspace();
     listen();
-    checkBackendHealth();
+    checkBrowserCompatibility();
     const savedCourse = readStorage(courseKey);
     const fromHash = decodeURIComponent(location.hash.slice(1));
     const target = byId.get(fromHash);

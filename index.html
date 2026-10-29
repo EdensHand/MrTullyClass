@@ -8,8 +8,7 @@
   <title>MrTullyClass | Code. Learn. Create.</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./styles.css">
-  <script defer src="./assignments.js"></script>
-  <script defer src="./app.js"></script>
+  <script type="module" src="./app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to assignment workspace</a>
@@ -70,10 +69,10 @@
         <div class="topbar-location"><span class="crumb">Classroom</span><span class="crumb-sep">/</span><strong id="current-course-label">CS Fundamentals</strong></div>
         <div class="topbar-actions">
           <span class="status-pill"><span class="status-dot"></span>No account needed</span>
-          <button type="button" class="backend-status" id="backend-status" data-state="idle"
-                  title="Check Render backend connection (status check only; code still runs in your browser)">
+          <button type="button" class="backend-status" id="runtime-status" data-state="idle"
+                  title="Node.js is running in this browser. Click to initialize.">
             <span class="backend-status-dot" aria-hidden="true"></span>
-            <span id="backend-status-text" role="status" aria-live="polite">Render: Not checked</span>
+            <span id="runtime-status-text" role="status" aria-live="polite">Node.js: Checking</span>
             <span class="backend-status-refresh" aria-hidden="true">↻</span>
           </button>
           <button type="button" class="outline-button compact" id="topbar-help">Help &amp; saving</button>
@@ -200,9 +199,9 @@
                   <button type="submit" class="terminal-send">Enter ↵</button>
                   <button type="button" id="terminal-cancel" class="terminal-cancel">Stop program</button>
                 </div>
-                <span id="terminal-input-help" class="terminal-input-help">Your input goes to the isolated Node.js process through Render. Do not enter passwords or personal information.</span>
+                <span id="terminal-input-help" class="terminal-input-help">Your input goes to Node.js running locally in this browser. Do not enter passwords or personal information.</span>
               </form>
-              <p class="run-note" id="run-note">Run executes main.js in an isolated Node.js sandbox through Render. Requires instructor setup; source code and terminal input leave this browser.</p>
+              <p class="run-note" id="run-note">Run executes main.js locally in a browser-based Node.js runtime. No execution account or paid server is required.</p>
               </div>
             </div>
           </section>
@@ -214,7 +213,7 @@
 
   <dialog id="help-dialog" class="help-dialog">
     <div class="modal-top"><h2>Where does my work go?</h2><button id="close-help" type="button" aria-label="Close help" class="close-button">×</button></div>
-    <p>Your drafts are saved <strong>in this browser on this device</strong> when local storage is available. Pressing Run sends the current JavaScript source and terminal input through Render to an isolated Node.js sandbox. This pilot does not link work to a student account or Google Classroom.</p>
+    <p>Your drafts are saved <strong>in this browser on this device</strong> when local storage is available. Pressing Run executes JavaScript and terminal input locally in a browser-based Node.js runtime. This pilot does not link work to a student account or Google Classroom.</p>
     <p><strong>Before you leave:</strong> use <strong>Download</strong> to save an individual code file or <strong>Back up work</strong> to save all your drafts. You can restore a backup later with <strong>Import backup</strong>.</p>
     <p>Do not enter passwords or private information into the code editor or terminal. This service does not give teachers access to student drafts or grades. Follow your teacher's instructions for submitting downloaded files.</p>
     <button type="button" id="acknowledge-help" class="run-button">Got it</button>
