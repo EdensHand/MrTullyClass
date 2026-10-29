@@ -36,10 +36,11 @@ for (const course of allowedCourses) {
 for (const type of allowedTypes) {
   assert.ok(catalog.some((lesson) => lesson.type === type), "No lessons of type " + type);
 }
-for (const id of ["assignment-list", "code-editor", "run-code", "preview-frame", "download-code", "export-work", "backup-file"]) {
+for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input", "node-stop", "download-code", "export-work", "backup-file"]) {
   assert.ok(html.includes('id="' + id + '"'), "Required element is missing: " + id);
 }
-assert.ok(html.includes('sandbox="allow-scripts allow-modals"'), "Preview must allow scripts and native prompt dialogs without allow-same-origin");
+assert.ok(!html.includes('id="preview-frame"') && !html.includes('id="js-runtime-mode"'),
+  "The student coding workspace must have one terminal, no mode selector or browser preview");
 assert.ok(html.includes('src="./assignments.js"') && html.includes('src="./app.js"'), "Local JavaScript source files must load");
 assert.ok(css.includes("@media") && css.includes(":focus-visible"), "Expected responsive/focus styles");
 assert.ok(appJs.includes("localStorage") && appJs.includes("downloadFile"), "Expected saving and export features");
@@ -64,7 +65,8 @@ assert.ok(appJs.includes('https://mrtullyclass-backend.onrender.com/health') && 
 assert.ok(appJs.includes('data.codeExecutionEnabled !== false') && appJs.includes('credentials: "omit"'), "Health check must verify backend response without credentials");
 assert.ok(appJs.includes('button.addEventListener') || appJs.includes('"backend-status").addEventListener("click", checkBackendHealth)'), "Backend health status must be retryable");
 assert.ok(css.includes('.backend-status[data-state="connected"]'), "Connection-state styling is required");
-assert.ok(html.includes('value="node"') && html.includes('id="node-stop"'), "Node.js mode and stop button must exist");
+assert.ok(html.includes('id="node-stop"') && html.includes('id="console-output"'),
+  "Single Node.js terminal and stop control must exist");
 assert.ok(appJs.includes('function runNodeCode(code)') &&
           appJs.includes('new WebSocket(socketUrl)') &&
           appJs.includes('type: "stdin"') &&
@@ -72,4 +74,13 @@ assert.ok(appJs.includes('function runNodeCode(code)') &&
 assert.ok(appJs.includes('if (!runnerAvailable)') && appJs.includes("nodeAccessKey"),
           "Node.js must require an enabled server and an access key");
 assert.ok(css.includes(".terminal-input-form[hidden]"), "Hidden terminal input form must stay hidden");
+assert.ok(appJs.includes('function runCode()') && appJs.includes('runNodeCode(code);'),
+  "Run must always execute JavaScript using the Node.js runner");
+assert.ok(!appJs.includes('js-runtime-mode') && !appJs.includes('srcdoc') &&
+          !appJs.includes('function sandboxCsp()') && !appJs.includes('mt-class-input-response'),
+  "Legacy browser runner and custom input bridge must be removed");
+assert.ok(appJs.includes('function isRunnableLesson(lesson)') &&
+          appJs.includes('lesson.id !== "cs3-canvas"') &&
+          appJs.includes('lesson.id !== "cs3-movement"'),
+  "Graphical assignments must remain non-runnable until the graphics runtime is introduced");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
