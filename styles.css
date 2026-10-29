@@ -676,3 +676,43 @@ body { background: var(--paper); color: var(--ink); }
   max-width: 100%;
 }
 .runtime-mode-select:focus-visible { outline: 2px solid #9ee7dd; outline-offset: 2px; }
+
+
+/* Render backend health only — no student source code is sent by this status check. */
+.backend-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #677683;
+  border-radius: 999px;
+  background: #3a4651;
+  color: #d7e5ee;
+  font: 700 11px/1.25 inherit;
+  font-size: 11px;
+  font-weight: 730;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.backend-status:hover:not(:disabled) { background: #4a5966; }
+.backend-status:focus-visible { outline: 2px solid #a6eee1; outline-offset: 3px; }
+.backend-status:disabled { opacity: .85; cursor: progress; }
+.backend-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #9daab5;
+}
+.backend-status-refresh { font-size: 14px; opacity: .8; }
+.backend-status[data-state="connected"] { border-color: #528c7e; background: #304f49; color: #dcf8ed; }
+.backend-status[data-state="connected"] .backend-status-dot { background: #8de4c5; }
+.backend-status[data-state="checking"] .backend-status-dot { background: #ebd28e; }
+.backend-status[data-state="unavailable"] { border-color: #9b7c6c; color: #ffe5d3; }
+.backend-status[data-state="unavailable"] .backend-status-dot { background: #f0b38d; }
+@media (max-width: 500px) {
+  .backend-status { white-space: normal; text-align: left; }
+}
