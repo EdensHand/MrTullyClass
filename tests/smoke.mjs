@@ -47,4 +47,16 @@ assert.ok(html.includes('id="sidebar-toggle"') && html.includes('aria-controls="
 assert.ok(html.includes('id="topbar-help"'), "Help should remain available when sidebar is collapsed");
 assert.ok(css.includes(".sidebar-collapsed") && css.includes("--paper: #242a32"), "Expected collapsible graphite theme");
 assert.ok(appJs.includes("syncSidebarToggle") && appJs.includes("sidebarKey"), "Expected persisted responsive sidebar state");
+assert.ok(html.includes('id="coding-workspace"') && html.includes('id="pane-divider"'), "Resizable code/output workspace must exist");
+assert.ok(html.indexOf('id="editor-card"') < html.indexOf('id="pane-divider"') &&
+          html.indexOf('id="pane-divider"') < html.indexOf('id="result-card"'), "Editor, divider and output must be side by side in order");
+assert.ok(html.includes('role="separator"') && html.includes('aria-valuenow="54"') &&
+          html.includes('tabindex="0"'), "Resizer must support assistive technology and keyboard focus");
+assert.ok(css.includes("grid-template-columns: minmax(0, var(--editor-width))") &&
+          css.includes("@container coding-studio") && css.includes(".pane-divider"), "Resizable grid and responsive fallback must exist");
+assert.ok(appJs.includes("initSplitWorkspace()") &&
+          appJs.includes('divider.addEventListener("pointermove"') &&
+          appJs.includes('divider.addEventListener("keydown"') &&
+          appJs.includes("setPointerCapture") &&
+          appJs.includes("splitterKey"), "Resizer drag, keyboard controls and preference saving must exist");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
