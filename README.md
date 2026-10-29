@@ -28,6 +28,16 @@ The top bar now checks [MrTullyClass Backend](https://github.com/EdensHand/MrTul
 
 **Health check only:** this makes a GET request with no credentials or student code. The Render service currently returns `"codeExecutionEnabled": false`; all JavaScript still executes inside the browser sandbox. The website's Run button is not connected to Node.js yet. Do not enable server-side execution before a secure, isolated runner is available.
 
+## Scheduled Render health checks
+
+The public frontend repository includes [`.github/workflows/keep-render-awake.yml`](.github/workflows/keep-render-awake.yml). GitHub Actions calls `https://mrtullyclass-backend.onrender.com/health` every 10 minutes (at :07, :17, :27, :37, :47, and :57 UTC) to help prevent the free Render service from going idle after 15 minutes. This workflow does not execute or transmit student code.
+
+- Scheduled GitHub Actions runs are **best-effort** and can be delayed or skipped, so this is not a guaranteed always-on service.
+- GitHub may automatically disable scheduled workflows in public repositories after 60 days without repository activity; re-enable it in the repository's **Actions** tab if that happens.
+- A continuously awake free Render service consumes free instance hours; Render includes 750 hours per workspace per calendar month. A second service or other usage may exhaust that allowance.
+- The workflow is in the **public** `MrTullyClass` repository because standard hosted Actions on public repos are free. Do not move a 24/7 schedule into the private backend repo without checking Actions minute charges.
+- To disable these requests, open **Actions → Keep Render backend warm → Disable workflow**. To test it manually, choose **Run workflow**.
+
 ## Important limits
 
 **This is not yet a learning management system.**
