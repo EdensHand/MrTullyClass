@@ -83,7 +83,9 @@ const name = await readLine("What should I call you?");
 console.log("Hello " + name);
 ```
 
-Native `prompt()`, `alert()`, and `confirm()` dialogs are permitted by the iframe sandbox. Individual browsers may still restrict embedded dialogs; for terminal-style input, `readLine()` remains available. No additional runtime or hosting service is required.\n\nThe code above runs as an ES module without rewriting the student source. `console.log` prints to the output panel. The browser itself parses and executes the student's JavaScript.
+Native `prompt()`, `alert()`, and `confirm()` dialogs are permitted by the iframe sandbox. Individual browsers may still restrict embedded dialogs; for terminal-style input, `readLine()` remains available. No additional runtime or hosting service is required.
+
+The code above runs as an ES module without rewriting the student source. `console.log` prints to the output panel. The browser itself parses and executes the student's JavaScript.
 
 ## Security and accessibility
 
