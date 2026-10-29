@@ -41,7 +41,7 @@ for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input"
 }
 assert.ok(!html.includes('id="preview-frame"') && !html.includes('id="js-runtime-mode"'),
   "The student coding workspace must have one terminal, no mode selector or browser preview");
-assert.ok(html.includes('src="./assignments.js"') && html.includes('src="./app.js"'), "Local JavaScript source files must load");
+assert.ok(html.includes('type="module" src="./app.js"'), "Vite module entrypoint is required");
 assert.ok(css.includes("@media") && css.includes(":focus-visible"), "Expected responsive/focus styles");
 assert.ok(appJs.includes("localStorage") && appJs.includes("downloadFile"), "Expected saving and export features");
 assert.ok(html.includes('id="sidebar-toggle"') && html.includes('aria-controls="course-navigation"'), "Expected accessible sidebar toggle");
@@ -60,19 +60,13 @@ assert.ok(appJs.includes("initSplitWorkspace()") &&
           appJs.includes('divider.addEventListener("keydown"') &&
           appJs.includes("setPointerCapture") &&
           appJs.includes("splitterKey"), "Resizer drag, keyboard controls and preference saving must exist");
-assert.ok(html.includes('id="backend-status"') && html.includes('id="backend-status-text"'), "Render backend connection control should exist");
-assert.ok(appJs.includes('https://mrtullyclass-backend.onrender.com/health') && appJs.includes('async function checkBackendHealth()'), "Backend connection must target the provided Render health URL");
-assert.ok(appJs.includes('data.codeExecutionEnabled !== false') && appJs.includes('credentials: "omit"'), "Health check must verify backend response without credentials");
-assert.ok(appJs.includes('button.addEventListener') || appJs.includes('"backend-status").addEventListener("click", checkBackendHealth)'), "Backend health status must be retryable");
-assert.ok(css.includes('.backend-status[data-state="connected"]'), "Connection-state styling is required");
-assert.ok(html.includes('id="node-stop"') && html.includes('id="console-output"'),
-  "Single Node.js terminal and stop control must exist");
-assert.ok(appJs.includes('function runNodeCode(code)') &&
-          appJs.includes('new WebSocket(socketUrl)') &&
-          appJs.includes('type: "stdin"') &&
-          appJs.includes('type: "run"'), "Node.js WebSocket runner and stdin must exist");
-assert.ok(appJs.includes('if (!runnerAvailable)') && appJs.includes("nodeAccessKey"),
-          "Node.js must require an enabled server and an access key");
+assert.ok(html.includes('id="runtime-status"') && html.includes('id="runtime-status-text"'), "Browser runtime status is required");
+const runtime = fs.readFileSync("browser-node.js", "utf8");
+const headers = fs.readFileSync("public/_headers", "utf8");
+assert.ok(headers.includes("Cross-Origin-Opener-Policy: same-origin") && headers.includes("Cross-Origin-Embedder-Policy: require-corp"), "COOP and COEP headers are needed");
+assert.ok(runtime.includes('from "@webcontainer/api"') && runtime.includes("WebContainer.boot") && runtime.includes('container.spawn("node", ["main.js"]'), "Browser Node.js runtime must exist");
+assert.ok(appJs.includes('createBrowserNodeRunner()') && appJs.includes('await browserNode.run(code,') && appJs.includes('browserNode.sendInput(value)'), "Browser runner must be used");
+assert.ok(!appJs.includes("RUNNER_ACCESS_TOKEN") && !appJs.includes("E2B_API_KEY") && !appJs.includes("mrtullyclass-backend.onrender.com"), "No paid execution service should be required");
 assert.ok(css.includes(".terminal-input-form[hidden]"), "Hidden terminal input form must stay hidden");
 assert.ok(appJs.includes('function runCode()') && appJs.includes('runNodeCode(code);'),
   "Run must always execute JavaScript using the Node.js runner");
