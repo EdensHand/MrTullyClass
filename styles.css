@@ -458,3 +458,137 @@ body { background: var(--paper); color: var(--ink); }
   .sidebar-head .brand-name { font-size: 15px; letter-spacing: -.7px; }
   .sidebar-head .brand-name small { font-size: 7px; letter-spacing: 1px; }
 }
+
+
+/* Resizable code and output split panes — text editor left, live output right */
+.studio-panel { container: coding-studio / inline-size; }
+.coding-workspace {
+  --editor-width: 54%;
+  display: grid;
+  grid-template-columns: minmax(0, var(--editor-width)) 14px minmax(0, 1fr);
+  min-width: 0;
+  width: 100%;
+  min-height: 470px;
+  align-items: stretch;
+}
+.coding-workspace .editor-card,
+.coding-workspace .result-card {
+  min-width: 0;
+  min-height: 470px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+}
+.coding-workspace .editor-card {
+  border-radius: 14px 5px 5px 14px;
+}
+.coding-workspace .result-card {
+  border-radius: 5px 14px 14px 5px;
+  padding: 13px;
+}
+.coding-workspace #code-editor {
+  flex: 1 1 auto;
+  resize: none;
+  min-height: 350px;
+  height: 100%;
+  overflow: auto;
+  padding: 18px 16px;
+}
+.coding-workspace .editor-toolbar {
+  min-height: 66px;
+  align-content: center;
+}
+.coding-workspace .editor-bottom { margin-top: auto; }
+.coding-workspace .result-head { flex-wrap: wrap; min-height: 40px; }
+.coding-workspace .console-output {
+  flex: 1 1 auto;
+  min-height: 260px;
+  max-height: none;
+  overflow: auto;
+}
+.coding-workspace .preview-surface { flex: 0 0 auto; }
+.coding-workspace .preview-surface iframe { height: clamp(210px, 31vh, 420px); }
+.coding-workspace .run-note { margin-top: 12px; }
+.pane-divider {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  border-radius: 7px;
+  background: #29323b;
+  transition: background-color .15s ease;
+}
+.pane-divider::before {
+  content: "";
+  position: absolute;
+  width: 3px;
+  height: 100%;
+  border-radius: 3px;
+  background: #4b5a65;
+  transition: background-color .15s ease;
+}
+.pane-divider:hover,
+.pane-divider:focus-visible,
+.is-resizing .pane-divider { background: #385251; }
+.pane-divider:hover::before,
+.pane-divider:focus-visible::before,
+.is-resizing .pane-divider::before { background: #7bded2; }
+.divider-grip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 12px;
+  height: 60px;
+  border-radius: 7px;
+  background: #465760;
+  border: 1px solid #69818a;
+  z-index: 1;
+  pointer-events: none;
+}
+.divider-grip i { display: block; width: 3px; height: 3px; border-radius: 50%; background: #c8d8de; }
+.is-resizing,
+.is-resizing * { cursor: col-resize !important; }
+.is-resizing iframe { pointer-events: none !important; }
+.is-resizing { user-select: none !important; }
+.pane-divider:focus-visible { outline: 3px solid #9aeee2; outline-offset: -3px; }
+
+/* Shrink the workspace gracefully before its columns become too narrow.
+   This responds to the available studio space, including a collapsed sidebar. */
+@container coding-studio (max-width: 570px) {
+  .coding-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    min-height: 0;
+  }
+  .coding-workspace .editor-card,
+  .coding-workspace .result-card {
+    min-height: 0;
+    height: auto;
+    border-radius: 13px;
+  }
+  .coding-workspace #code-editor { min-height: 350px; height: 350px; flex: none; resize: vertical; }
+  .coding-workspace .console-output { min-height: 190px; max-height: 320px; flex: none; }
+  .pane-divider { display: none; }
+}
+@media (max-width: 720px) {
+  .coding-workspace {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    gap: 11px;
+  }
+  .coding-workspace .editor-card,
+  .coding-workspace .result-card { min-height: 0; height: auto; border-radius: 13px; }
+  .coding-workspace #code-editor { min-height: 300px; height: 330px; flex: none; resize: vertical; }
+  .coding-workspace .console-output { min-height: 190px; max-height: 320px; flex: none; }
+  .pane-divider { display: none; }
+}
