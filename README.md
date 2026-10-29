@@ -1,143 +1,65 @@
-# MrTullyClass — Student Coding Workspace
+# MrTullyClass — Coding Workspace
 
-A lightweight, **text-based** classroom coding workspace for Fundamentals of Computer Science (CSF), Computer Science 3 (CS3), and AP Computer Science A (AP CSA).
+A student coding and assignment website for CS Fundamentals (CSF), Computer Science 3 (CS3), and AP Computer Science A (AP CSA). The frontend is hosted on GitHub Pages.
 
-Built as a plain, static website with no npm install, external CSS or JavaScript dependencies, student logins, analytics, or remote database. The public pilot is intended to run on GitHub Pages.
+## One JavaScript runtime
 
-**Interface update (v0.2):** The site now uses a charcoal/slate-gray theme with teal accents. The class navigation can collapse into an icon rail on desktop or be hidden/shown on smaller screens. The choice persists in this browser when localStorage is available. The Help & saving control in the top bar remains accessible when the sidebar is collapsed.
+**JavaScript assignments have exactly one Run button and one terminal: Node.js.** There is no ES-module/classic/Node chooser or browser-side interpreter. The editor submits the current JavaScript source to the [MrTullyClass-Backend](https://github.com/EdensHand/MrTullyClass-Backend) Render gateway over an authenticated WebSocket. The gateway runs it as `main.js` in a separate isolated E2B Node.js sandbox and streams stdout, stderr, and interactive stdin through the same terminal.
 
-## What works in this pilot
-
-- Switch between CSF, CS3, and AP CSA starter assignments.
-- Search lessons and filter them by unit.
-- Read short directions, learning goals, and optional extension challenges.
-- Write real JavaScript or HTML/CSS in a text editor.
-- Run JavaScript in an isolated, sandboxed iframe (including an HTML canvas for graphics lessons).
-- Preview HTML/CSS in a sandboxed iframe.
-- Receive interactive input from students in the output pane using `await readLine(question)`, `await readInt(question)`, or `await readFloat(question)` in JavaScript assignments. Arbitrary answers are returned to the running code; numeric input is validated, and students may cancel a prompt. This is a browser-based **console emulator**, not a system terminal or native standard input.
-- Edit and download Java source files **without compiling them on the site**.
-- Automatically save drafts to this browser's localStorage, if enabled.
-- Mark lessons complete locally (this is **not** a grade or submission).
-- Download individual source files, export all drafts as JSON, or import a prior JSON backup.
-- Use a mobile-responsive layout, a collapsible side navigation menu, and a keyboard shortcut: Ctrl/Cmd + Enter runs JavaScript or HTML preview.
-- Work in a CodeHS-style split workspace: code editor on the left and output/preview on the right. Drag the center handle to resize (25–75%), use Left/Right arrows or Home/End when focused, and double-click to reset. The width is stored locally; narrow screens stack the panels vertically.
-
-## Render backend connection check
-
-The top bar now checks [MrTullyClass Backend](https://github.com/EdensHand/MrTullyClass-Backend) at `https://mrtullyclass-backend.onrender.com/health`. The status control shows when Render responds and can be clicked to retry. Render's free service may need time to wake after inactivity.
-
-**Health check only:** this makes a GET request with no credentials or student code. The Render service currently returns `"codeExecutionEnabled": false`; all JavaScript still executes inside the browser sandbox. The website's Run button is not connected to Node.js yet. Do not enable server-side execution before a secure, isolated runner is available.
-
-## Scheduled Render health checks
-
-The public frontend repository includes [`.github/workflows/keep-render-awake.yml`](.github/workflows/keep-render-awake.yml). GitHub Actions calls `https://mrtullyclass-backend.onrender.com/health` every 10 minutes (at :07, :17, :27, :37, :47, and :57 UTC) to help prevent the free Render service from going idle after 15 minutes. This workflow does not execute or transmit student code.
-
-- Scheduled GitHub Actions runs are **best-effort** and can be delayed or skipped, so this is not a guaranteed always-on service.
-- GitHub may automatically disable scheduled workflows in public repositories after 60 days without repository activity; re-enable it in the repository's **Actions** tab if that happens.
-- A continuously awake free Render service consumes free instance hours; Render includes 750 hours per workspace per calendar month. A second service or other usage may exhaust that allowance.
-- The workflow is in the **public** `MrTullyClass` repository because standard hosted Actions on public repos are free. Do not move a 24/7 schedule into the private backend repo without checking Actions minute charges.
-- To disable these requests, open **Actions → Keep Render backend warm → Disable workflow**. To test it manually, choose **Run workflow**.
-
-## Isolated Node.js terminal (instructor pilot)
-
-The JavaScript execution-mode selector now includes **Node.js (isolated terminal)**. It connects to the Render backend using an authenticated WebSocket (`wss://mrtullyclass-backend.onrender.com/ws`), sends the edited `main.js` file, and streams output to the right-hand terminal. Students can type standard `stdin` lines into the terminal and press Enter; the Stop button ends the run.
-
-This mode is **disabled until you configure both secrets on Render**: `E2B_API_KEY` from [E2B](https://e2b.dev/) and `RUNNER_ACCESS_TOKEN` (a separate 32+-character teacher access secret). The secret is entered when running a Node.js program and kept only in page memory; it is not an assignment or student login. The E2B account may incur usage charges. No student source is sent to Render while the runner is disabled.
-
-For this pilot the isolated runner has 90-second and 100-KB output limits, a maximum of two concurrent runs, 40 runs per server hour, and outbound networking disabled. Do not distribute a shared access token to students or treat this as classroom-ready authentication. Individual student identity, usage controls, and district review are needed before classroom rollout.
-
-The **ES module** and **Classic script** modes remain available for browser JavaScript, DOM, and canvas assignments; they still run locally and do not send source code to Render.
-
-## Important limits
-
-**This is not yet a learning management system.**
-
-- No GitHub or Google login.
-- No server-side saves, cloud synchronization, account identity, teacher access to work, submission history, or automatic grading.
-- Students must **download their files and follow the teacher's directions to submit them** elsewhere.
-- Java source can be edited and downloaded but cannot be compiled or run in this static pilot.
-- JavaScript is executed by the browser's **native JavaScript engine**, not by a hand-written parser or a restricted set of example commands. The editor now provides **ES module** mode (default; supports native top-level `await`) and **classic script** mode (traditional browser script semantics). Student source is not enclosed in a synthetic function; syntax and runtime errors come from the actual engine.
-- The optional `readLine`, `readInt`, and `readFloat` helpers bridge the native runtime to the terminal input UI. They do not restrict the language or predefine student input.
-- This is browser JavaScript, **not Node.js**: `require`, Node built-ins, file system access, remote module loading, and arbitrary network requests are unavailable under the sandbox and content security policy. An infinite synchronous loop can still make a browser tab unresponsive; do not treat this prototype as a hardened multi-tenant execution service.
-- HTML/CSS preview and Java source are not connected to the interactive console input protocol; the new input functions apply to JavaScript programs in the sandboxed runner.
-- Local drafts may be lost if students clear browser data, use incognito mode, switch computers, or the district disables browser storage.
-- Marking work "Finished locally" does not tell a teacher that work is complete.
-- Do not store real passwords, secrets, personal information, student records, or grades in the editor or in the public repository.
-
-## Publishing on GitHub Pages
-
-Repository: [EdensHand/MrTullyClass](https://github.com/EdensHand/MrTullyClass)
-
-1. In this repository select **Settings → Pages**.
-2. Under **Build and deployment**, select **Deploy from a branch**.
-3. Choose branch **main**, folder **/(root)** and click **Save**.
-4. After GitHub finishes its build, visit:
-   **https://edenshand.github.io/MrTullyClass/**
-
-The exact public URL is *not confirmed live* until Pages is enabled and the published site loads.
-
-A custom domain such as \`mrtully.com\` can be configured later after that domain is owned and DNS is configured.
-
-## Project structure
-
-- \`index.html\` — semantic page layout and accessible controls
-- \`styles.css\` — responsive design, no external UI framework
-- \`assignments.js\` — curated starter lessons and code for three courses
-- \`app.js\` — browser app, editor, local saving, backup, sandbox execution
-- \`favicon.svg\` — site icon
-- \`.nojekyll\` — serve source files directly on GitHub Pages
-- \`tests/smoke.mjs\` — simple static content checks
-- \`.github/workflows/check.yml\` — syntax and smoke tests on push
-
-## Editing assignments
-
-Add an object to the \`window.MT_ASSIGNMENTS\` array in \`assignments.js\`. Each assignment includes an \`id\`, \`course\` (\`CSF\`, \`CS3\`, or \`AP CSA\`), \`type\` (\`javascript\`, \`html\`, or \`java\`), \`unit\`, \`title\`, \`summary\`, \`objectives\`, \`steps\`, \`stretch\`, and starter \`code\`.
-
-Never reuse an existing assignment ID for a different project: local drafts are keyed by that ID. The assignment catalog is **public**, so do not include answer keys or confidential teaching materials in it.
-
-## JavaScript execution modes
-
-Choose the mode beside the Run button:
-
-- **ES module (default):** use modern `import`/`export` syntax where the sandbox permits modules, native top-level `await`, promises, asynchronous functions, browser DOM, and canvas drawing.
-- **Classic script:** use traditional top-level browser JavaScript. For terminal input, put an `await readLine(...)` call inside an `async` function and invoke that function.
-
-Example:
+Students write ordinary Node.js code, such as:
 
 ```javascript
-const name = await readLine("What should I call you?");
-console.log("Hello " + name);
+const readline = require("node:readline/promises");
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+async function main() {
+  try {
+    const name = await rl.question("Your name? ");
+    console.log("Hello, " + name);
+  } finally {
+    rl.close();
+  }
+}
+main().catch(console.error);
 ```
 
-Native `prompt()`, `alert()`, and `confirm()` dialogs are permitted by the iframe sandbox. Individual browsers may still restrict embedded dialogs; for terminal-style input, `readLine()` remains available. No additional runtime or hosting service is required.
+When a program is waiting for input, the student types into the terminal and presses Enter. **There are no special MrTullyClass-only input commands.**
 
-The code above runs as an ES module without rewriting the student source. `console.log` prints to the output panel. The browser itself parses and executes the student's JavaScript.
+### Current limits
 
-## Security and accessibility
+- The Node.js terminal **cannot be used until the instructor configures E2B_API_KEY and RUNNER_ACCESS_TOKEN in Render**. The current connection-status indicator shows whether remote execution is enabled. The shared instructor access token is prompted for at first run and kept in page memory only; it is **not** suitable for general student distribution.
+- The E2B runner has a 90-second process timeout and bounded output, with rate and concurrency limits. E2B charges may apply. Never share the E2B API key with students or place it in the frontend.
+- **Browser graphics are deferred.** Existing canvas, keyboard-movement, and HTML/webpage lessons remain editable and downloadable, but their Run buttons are disabled until a separate graphical execution environment is designed.
+- AP CSA Java source assignments remain edit/download only. **Java is not executed by the Node.js terminal.**
 
-- Student-authored JavaScript and HTML run inside \`sandbox="allow-scripts allow-modals"\` iframes, without \`allow-same-origin\`, with a restrictive preview content-security policy.
-- JavaScript console output is passed to the parent using \`postMessage\`, filtered by the current iframe and execution token, and inserted as text instead of HTML.
-- The site does not send student drafts to a server.
-- All interactive controls have labels and keyboard focus states, with responsive layout and reduced-motion support.
+## Student features
 
-**This sandbox is appropriate for a classroom coding prototype, not for hosting arbitrary untrusted websites or hostile code.** An HTML/CSS lesson may still be subject to local school browser policies.
+- Select CSF, CS3, or AP CSA assignments; search and filter lessons.
+- Edit real source code with automatic draft saving to localStorage on the same device.
+- For supported JavaScript lessons: Run, Stop, stdout/stderr, and stdin in one adjustable side-by-side code/terminal layout.
+- Collapse the sidebar, resize the panels by dragging the divider, and press Ctrl/Cmd + Enter to run JavaScript.
+- Download source files, mark local completion, export and import draft backups.
 
-## Next milestones
+## Privacy and deployment
 
-1. Confirm GitHub Pages deployment and test the site on a district device.
-2. Add more curriculum-specific assignments, instructor editing, and accessibility checks.
-3. Design a separate authorized backend for student identity, saved submissions, teacher review, and grading. This will need district approval, privacy requirements, and a hosting/database decision.
-4. Add authentication and per-class enrollment only after the backend is available, not as a client-side mock login.
+The site has **no student accounts, synced submissions, cloud draft storage, teacher dashboard, or grades**. Drafts are saved on the local device unless students explicitly download or export a backup. **When students press Run, their JavaScript source and terminal input are sent to the Render gateway and the isolated E2B sandbox for execution.** Do not type private or sensitive information.
 
-## Local preview
+The public frontend is at https://edenshand.github.io/MrTullyClass/ and remains on GitHub Pages. The health endpoint is at https://mrtullyclass-backend.onrender.com/health. The backend must be configured independently before remote execution works; this repository alone does not provide a Node.js server.
 
-Open \`index.html\` in a modern browser from a local folder, or serve the directory with:
+To run the frontend locally, serve it over HTTP, e.g. `python -m http.server 8000`, and open http://localhost:8000/. The server's WebSocket allows that origin for local instructor tests.
 
-\`\`\`sh
-python -m http.server 8000
-\`\`\`
+## Development
 
-Then visit \`http://localhost:8000/\`.
+```sh
+node --check app.js
+node --check assignments.js
+node tests/smoke.mjs
+node tests/input.mjs
+```
+
+Keep lesson IDs stable; browser drafts are keyed by assignment ID. For a previously saved version of a lesson that used the old `readLine()` helper, select **Reset starter** to load the current Node.js starter code; download old edits first if needed.
+
+See the [backend README](https://github.com/EdensHand/MrTullyClass-Backend) for sandbox prerequisites, security limits, and test instructions.
 
 ## License
 
