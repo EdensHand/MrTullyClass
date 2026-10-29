@@ -59,4 +59,9 @@ assert.ok(appJs.includes("initSplitWorkspace()") &&
           appJs.includes('divider.addEventListener("keydown"') &&
           appJs.includes("setPointerCapture") &&
           appJs.includes("splitterKey"), "Resizer drag, keyboard controls and preference saving must exist");
+assert.ok(html.includes('id="backend-status"') && html.includes('id="backend-status-text"'), "Render backend connection control should exist");
+assert.ok(appJs.includes('https://mrtullyclass-backend.onrender.com/health') && appJs.includes('async function checkBackendHealth()'), "Backend connection must target the provided Render health URL");
+assert.ok(appJs.includes('data.codeExecutionEnabled !== false') && appJs.includes('credentials: "omit"'), "Health check must verify backend response without credentials");
+assert.ok(appJs.includes('button.addEventListener') || appJs.includes('"backend-status").addEventListener("click", checkBackendHealth)'), "Backend health status must be retryable");
+assert.ok(css.includes('.backend-status[data-state="connected"]'), "Connection-state styling is required");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
