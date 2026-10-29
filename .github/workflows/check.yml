@@ -28,3 +28,9 @@ jobs:
         run: |
           node tests/smoke.mjs
           node tests/input.mjs
+      - name: Test Node.js backend health endpoint
+        run: |
+          node --check backend/server.js
+          node --check backend/test/server.test.js
+          cd backend
+          npm test
