@@ -167,11 +167,13 @@
                   <select id="js-runtime-mode" class="runtime-mode-select" aria-label="JavaScript execution mode" title="Choose how the browser interprets your code">
                     <option value="module">ES module (supports await)</option>
                     <option value="classic">Classic script</option>
+                    <option value="node">Node.js (isolated terminal)</option>
                   </select>
                   <span class="save-status" id="save-status" role="status" aria-live="polite">Ready</span>
                   <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
                   <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
                   <button type="button" id="run-code" class="run-button">▶ Run code</button>
+                  <button type="button" id="node-stop" class="toolbar-action" hidden disabled>■ Stop</button>
                 </div>
               </div>
               <label class="sr-only" for="code-editor">Code editor</label>
