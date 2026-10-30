@@ -37,7 +37,7 @@
 
   function readStorage(key) {
     try {
-      return localStorage.getItem(key);
+      return window.MTAccount?.storage?.getItem(key) ?? localStorage.getItem(key);
     } catch (error) {
       canStore = false;
       return null;
@@ -47,7 +47,7 @@
   function writeStorage(key, value) {
     if (!canStore) return false;
     try {
-      localStorage.setItem(key, value);
+      if(window.MTAccount?.storage) window.MTAccount.storage.setItem(key,value); else localStorage.setItem(key,value);
       return true;
     } catch (error) {
       canStore = false;
@@ -57,7 +57,7 @@
 
   function removeStorage(key) {
     try {
-      localStorage.removeItem(key);
+      if(window.MTAccount?.storage) window.MTAccount.storage.removeItem(key); else localStorage.removeItem(key);
       return true;
     } catch (error) {
       canStore = false;
@@ -109,7 +109,7 @@
       return;
     }
     if (writeStorage(key, code)) {
-      setStatus("Saved on this device");
+      setStatus(window.MTAccount?.signedIn ? "Saved locally · syncing" : "Saved on this device");
     } else {
       setStatus("Browser saving unavailable — download code");
     }
