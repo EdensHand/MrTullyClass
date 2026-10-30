@@ -37,7 +37,7 @@
 
   function readStorage(key) {
     try {
-      return localStorage.getItem(key);
+      return window.MTCloud?.storage ? window.MTCloud.storage.getItem(key) : localStorage.getItem(key);
     } catch (error) {
       canStore = false;
       return null;
@@ -47,7 +47,8 @@
   function writeStorage(key, value) {
     if (!canStore) return false;
     try {
-      localStorage.setItem(key, value);
+      if (window.MTCloud?.storage) window.MTCloud.storage.setItem(key, value);
+      else localStorage.setItem(key, value);
       return true;
     } catch (error) {
       canStore = false;
@@ -57,7 +58,8 @@
 
   function removeStorage(key) {
     try {
-      localStorage.removeItem(key);
+      if (window.MTCloud?.storage) window.MTCloud.storage.removeItem(key);
+      else localStorage.removeItem(key);
       return true;
     } catch (error) {
       canStore = false;
@@ -547,7 +549,15 @@
     $("open-help").addEventListener("click", function () { $("help-dialog").showModal(); });
     $("close-help").addEventListener("click", function () { $("help-dialog").close(); });
     $("acknowledge-help").addEventListener("click", function () { $("help-dialog").close(); });
-    window.addEventListener("pagehide", saveCurrentDraft);
+    window.addEventListener("pagehide", function () {
+      if (!window.MTCloud?.signingOut) saveCurrentDraft();
+    });
+    document.addEventListener("mrtully-cloud-ready", function () {
+      if (!currentLesson) return;
+      const id = currentLesson.id;
+      currentLesson = null; // Never write a guest editor buffer over account code.
+      selectLesson(id, false);
+    });
     window.addEventListener("hashchange", function () {
       const id = decodeURIComponent(location.hash.slice(1));
       if (byId.has(id) && (!currentLesson || currentLesson.id !== id)) {
