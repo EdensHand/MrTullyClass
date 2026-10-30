@@ -36,7 +36,7 @@ for (const course of allowedCourses) {
 for (const type of allowedTypes) {
   assert.ok(catalog.some((lesson) => lesson.type === type), "No lessons of type " + type);
 }
-for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input", "node-stop", "download-code", "export-work", "backup-file"]) {
+for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input", "stop-code", "download-code", "export-work", "backup-file"]) {
   assert.ok(html.includes('id="' + id + '"'), "Required element is missing: " + id);
 }
 assert.ok(!html.includes('id="preview-frame"') && !html.includes('id="js-runtime-mode"'),
@@ -80,11 +80,11 @@ assert.ok(!appJs.includes("mrtullyclass-backend.onrender.com") &&
   "Classroom JavaScript must not use the paid cloud runner");
 
 assert.ok(css.includes(".terminal-input-form[hidden]"), "Hidden terminal input form must stay hidden");
-assert.ok(appJs.includes('function runCode()') && appJs.includes('runNodeCode(code);'),
-  "Run must always execute JavaScript using the Node.js runner");
-assert.ok(!appJs.includes('js-runtime-mode') && !appJs.includes('srcdoc') &&
-          !appJs.includes('function sandboxCsp()') && !appJs.includes('mt-class-input-response'),
-  "Legacy browser runner and custom input bridge must be removed");
+assert.ok(appJs.includes('function runCode()') && appJs.includes('window.MTBrowserRunner.buildDocument(code, token)'),
+  "Run must always execute JavaScript using the browser runner");
+assert.ok(!appJs.includes('js-runtime-mode') && !appJs.includes('function sandboxCsp()') &&
+          !appJs.includes('new WebSocket('),
+  "No old execution modes or paid remote runner should remain");
 assert.ok(appJs.includes('function isRunnableLesson(lesson)') &&
           appJs.includes('lesson.id !== "cs3-canvas"') &&
           appJs.includes('lesson.id !== "cs3-movement"'),
