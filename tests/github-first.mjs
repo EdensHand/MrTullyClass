@@ -118,3 +118,25 @@ assert.ok(!config.includes("CLIENT_SECRET")&&!config.includes("SESSION_KEY"),"No
 assert.ok(!html.includes("supabase"));
 globalThis.fetch=originalFetch;
 console.log("GitHub-first OAuth, repo authorization, versioned saves and Classroom 50 tag submission tests passed.");
+
+
+// Run the teacher-side sample grader against the actual CSF starter lesson.
+const {spawnSync}=await import("node:child_process");
+const os=await import("node:os");
+const path=await import("node:path");
+const vm=await import("node:vm");
+const lessonsEnv={window:{}};
+vm.runInNewContext(fs.readFileSync("assignments.js","utf8"),lessonsEnv);
+const inputLesson=lessonsEnv.window.MT_ASSIGNMENTS.find(l=>l.id==="csf-user-input");
+assert.ok(inputLesson?.code);
+const folder=fs.mkdtempSync(path.join(os.tmpdir(),"mrtully-grader-"));
+try{
+  const studentFile=path.join(folder,"main.js");
+  fs.writeFileSync(studentFile,inputLesson.code);
+  const checked=spawnSync(process.execPath,["grading-examples/csf-user-input/grader.mjs",studentFile],{
+    cwd:process.cwd(),encoding:"utf8",timeout:5000,maxBuffer:15000
+  });
+  assert.equal(checked.status,0,checked.stdout+"\n"+checked.stderr);
+  assert.match(checked.stdout,/Score: 3\/3/);
+}finally{fs.rmSync(folder,{recursive:true,force:true});}
+console.log("Teacher-side CSF sample grader passed against the real starter assignment.");

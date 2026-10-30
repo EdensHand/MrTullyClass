@@ -103,3 +103,16 @@ Keep your grading rules in teacher-managed Classroom 50 configurations. For brow
 - If file revisions differ, saving refuses rather than overwriting, and the student can download their local work, compare, and choose whether to import the GitHub version.
 - The prototype supports only the configured classwork source files and GitHub default branch. It does not automatically create student repositories, assign grades, or enroll students in Classroom 50.
 - The app uses a short-lived account session and should be signed out on a shared school computer.
+
+
+## Sample CSF auto-grader included
+
+A teacher-side sample grader is included at
+[`grading-examples/csf-user-input/grader.mjs`](grading-examples/csf-user-input/grader.mjs).
+It tests the **Interactive Conversation** starter's valid name/number, canceled
+input, and invalid number handling (three checks). Run locally in an isolated
+grading environment with `node grading-examples/csf-user-input/grader.mjs main.js`.
+It reports 3/3 and exits zero when all three checks pass; configure a Classroom 50
+run-command grading test accordingly. This is a starter rubric, not a secure or
+complete substitute for evaluating student understanding. Store the grader on the
+teacher-controlled side, not in a student-editable assignment repository.
