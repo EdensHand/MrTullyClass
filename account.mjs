@@ -80,7 +80,7 @@ async function signOut(){
   account.signingOut=true;
   storage={getItem(){return null;},setItem(){},removeItem(){}};
   user=null;
-  try{if(!queue.length)browserStorage.removeItem(queuePrefix+oldUser.id)}catch{}
+  try{browserStorage.removeItem(queuePrefix+oldUser.id)}catch{}
   location.reload();
 }
 async function hydrate(){
