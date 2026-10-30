@@ -19,8 +19,6 @@
   let toastTimer = null;
   let outputCount = 0;
   let runToken = null;
-  let pendingInput = null;
-  let inputQueue = [];
 
   const $ = function (id) { return document.getElementById(id); };
   const elements = {
@@ -34,9 +32,7 @@
     output: $("console-output"), frame: $("execution-frame"), badge: $("result-badge"),
     resultLabel: $("result-label"), note: $("run-note"),
     stats: $("editor-stats"), progress: $("progress-summary"),
-    courseLabel: $("current-course-label"),
-    inputForm: $("terminal-input-form"), inputLabel: $("terminal-input-label"),
-    inputField: $("terminal-input")
+    courseLabel: $("current-course-label")
   };
 
   function readStorage(key) {
@@ -86,10 +82,6 @@
 
   function stopExecution() {
     runToken = null;
-    pendingInput = null;
-    inputQueue = [];
-    elements.inputForm.hidden = true;
-    elements.inputField.value = "";
     elements.frame.srcdoc = "";
     const stop = $("stop-code");
     stop.hidden = true;
@@ -248,7 +240,7 @@
     elements.run.textContent = canRun ? "▶ Run code" : "Editing only";
     elements.resultLabel.textContent = "JavaScript terminal";
     elements.note.textContent = canRun
-      ? "Runs JavaScript in an isolated browser frame. Use console.log() for output or await readLine() for input; no server upload."
+      ? "Runs JavaScript in an isolated browser frame. Use console.log() for output and the browser's prompt() for input; no server upload."
       : lesson.type === "java"
         ? "Java assignments are edit/download only; this terminal executes JavaScript."
         : "Graphics and webpage previews are on hold until a separate graphics environment is designed.";
@@ -256,7 +248,7 @@
     elements.finish.textContent = isFinished(id) ? "✓ Finished locally" : "✓ Mark finished";
     clearOutput(canRun
       ? "Press Run to execute JavaScript in the browser terminal."
-      : "This lesson can be edited and downloaded, but it is not supported by the Node.js terminal.");
+      : "This lesson can be edited and downloaded, but it cannot run in the JavaScript terminal.");
     editorStats();
     renderAssignmentList();
     progress();
@@ -277,75 +269,19 @@
     elements.badge.textContent = isError ? "Error" : "Ran";
   }
 
-  // Each student program runs in an opaque-origin iframe. The bridge is
-  // adapted from Ms. Whitby's Playground and extended for terminal input.
-  function showNextInput() {
-    if (pendingInput || !inputQueue.length || !runToken) return;
-    pendingInput = inputQueue.shift();
-    elements.inputLabel.textContent = pendingInput.prompt || "Your program is waiting for input:";
-    elements.inputField.value = "";
-    elements.inputForm.hidden = false;
-    elements.badge.textContent = "Waiting for input";
-    elements.inputField.focus();
-  }
-
-  function requestTerminalInput(data) {
-    if (!Number.isSafeInteger(data.requestId) || data.requestId < 1 ||
-        data.requestId > 1000 || inputQueue.length > 50) {
-      appendOutput("Too many input requests.", true);
-      stopExecution();
-      return;
-    }
-    inputQueue.push({
-      token: runToken,
-      requestId: data.requestId,
-      prompt: typeof data.value === "string" ? data.value.slice(0, 300) : ""
-    });
-    showNextInput();
-  }
-
-  function submitTerminalInput(cancelled) {
-    if (!pendingInput || !runToken || pendingInput.token !== runToken) return;
-    const request = pendingInput;
-    const value = elements.inputField.value.slice(0, 500);
-    pendingInput = null;
-    elements.inputForm.hidden = true;
-    elements.inputField.value = "";
-
-    if (!cancelled) appendOutput("> " + value, false);
-    const frameWindow = elements.frame.contentWindow;
-    if (frameWindow) {
-      frameWindow.postMessage({
-        kind: "mt-class-input-response",
-        token: request.token,
-        requestId: request.requestId,
-        value: value,
-        cancelled: !!cancelled
-      }, "*");
-    }
-    if (cancelled) {
-      appendOutput("Input cancelled.", true);
-      stopExecution();
-      elements.badge.textContent = "Stopped";
-    } else {
-      elements.badge.textContent = "Running";
-      showNextInput();
-    }
-  }
-
+  // Console messages come from the isolated preview iframe. The console bridge
+  // is adapted from Ms. Whitby's Playground; native prompt() needs no input bridge.
   function handleSandboxMessage(event) {
     if (!runToken || event.source !== elements.frame.contentWindow) return;
     const data = event.data;
     if (!data || data.kind !== "mt-class-output" || data.token !== runToken) return;
-    if (data.type === "input-request") {
-      requestTerminalInput(data);
-    } else if (data.type === "clear") {
+    if (data.type === "clear") {
       elements.output.textContent = "";
       outputCount = 0;
     } else if (data.type === "log" || data.type === "error") {
       appendOutput(String(data.value ?? "").slice(0, 10000), data.type === "error");
     } else if (data.type === "complete") {
-      if (!pendingInput && inputQueue.length === 0) elements.badge.textContent = "Finished";
+      elements.badge.textContent = "Finished";
     }
   }
 
@@ -594,13 +530,6 @@
     $("download-code").addEventListener("click", downloadCurrent);
     $("reset-code").addEventListener("click", resetCurrent);
     $("clear-output").addEventListener("click", function () { clearOutput("Output cleared. Run the program again when ready."); });
-    elements.inputForm.addEventListener("submit", function (event) {
-      event.preventDefault();
-      submitTerminalInput(false);
-    });
-    $("terminal-cancel").addEventListener("click", function () {
-      submitTerminalInput(true);
-    });
     $("stop-code").addEventListener("click", function () {
       if (!runToken) return;
       stopExecution();

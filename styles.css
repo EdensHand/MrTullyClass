@@ -594,71 +594,7 @@ body { background: var(--paper); color: var(--ink); }
 }
 
 
-/* Interactive stdin-style terminal prompts */
-.terminal-input-form {
-  margin-top: 10px;
-  border: 1px solid #4e817d;
-  background: #24343c;
-  border-radius: 10px;
-  padding: 12px;
-  display: grid;
-  gap: 8px;
-}
-.terminal-input-form label {
-  font: 600 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: #b9f5df;
-  overflow-wrap: anywhere;
-}
-.terminal-input-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  min-width: 0;
-}
-.terminal-prompt {
-  color: #8ee4cc;
-  font: bold 18px ui-monospace, Consolas, monospace;
-}
-#terminal-input {
-  background: #17232d;
-  border: 1px solid #647885;
-  border-radius: 7px;
-  color: #f4f8fb;
-  padding: 10px 9px;
-  min-width: 0;
-  width: 100%;
-  flex: 1 1 90px;
-  font: 13px ui-monospace, SFMono-Regular, Consolas, monospace;
-}
-#terminal-input::placeholder { color: #bac9d2; opacity: 1; }
-.terminal-send,
-.terminal-cancel {
-  flex: none;
-  border-radius: 7px;
-  padding: 10px 11px;
-  font-size: 11px;
-  font-weight: 750;
-}
-.terminal-send {
-  border: 1px solid #338f88;
-  background: #247872;
-  color: #fff;
-}
-.terminal-send:hover { background: #338c84; }
-.terminal-cancel {
-  border: 1px solid #617280;
-  background: #3b4854;
-  color: #e2edf4;
-}
-.terminal-cancel:hover { background: #52616c; }
-.terminal-input-help { color: #b4cad4; font-size: 10px; line-height: 1.5; }
-@media (max-width: 950px) {
-  .terminal-input-row { flex-wrap: wrap; }
-  #terminal-input { flex-basis: calc(100% - 24px); }
-}
-
-
-/* Render backend health only — no student source code is sent by this status check. */
+/* Browser execution status indicator */
 .backend-status {
   display: inline-flex;
   align-items: center;
@@ -698,8 +634,7 @@ body { background: var(--paper); color: var(--ink); }
 }
 
 
-/* Isolated Node.js terminal controls */
-.terminal-input-form[hidden],
+/* Browser JavaScript Stop button */
 #stop-code[hidden] { display: none !important; }
 #stop-code {
   border-color: #a7836d;

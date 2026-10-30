@@ -1,7 +1,7 @@
 /* Browser-only JavaScript runner for MrTullyClass.
  * Console capture adapted with permission from mswhitby/playground,
  * public/console-drawer.mjs (Ms. Whitby's Playground).
- * No remote code execution, imports, or account required.
+ * No remote code execution, custom input helpers, imports, or account required.
  */
 (function (root) {
   "use strict";
@@ -28,41 +28,6 @@
       'window.onerror = (message, source, line) => { __mtSend("error", String(message) + (line ? " (line " + line + ")" : "")); return true; };',
       'window.onunhandledrejection = event => __mtSend("error", __mtFormat(event.reason));',
       'window.__mtComplete = () => __mtSend("complete", "");',
-      'let __mtNextInput = 0;',
-      'const __mtPending = new Map();',
-      'window.addEventListener("message", event => {',
-      '  if (event.source !== parent || !event.data || event.data.kind !== "mt-class-input-response" || event.data.token !== __mtToken) return;',
-      '  const item = __mtPending.get(event.data.requestId);',
-      '  if (!item) return;',
-      '  __mtPending.delete(event.data.requestId);',
-      '  if (event.data.cancelled) item.reject(new Error("Input cancelled"));',
-      '  else item.resolve(String(event.data.value).slice(0, 500));',
-      '});',
-      'function readLine(question = "") {',
-      '  const id = ++__mtNextInput;',
-      '  if (id > 1000) return Promise.reject(new Error("Too many input requests"));',
-      '  return new Promise((resolve, reject) => {',
-      '    __mtPending.set(id, {resolve, reject});',
-      '    __mtSend("input-request", String(question).slice(0, 300), id);',
-      '  });',
-      '}',
-      'const input = readLine;',
-      'async function readInt(question = "Enter a whole number:") {',
-      '  while (true) {',
-      '    const result = (await readLine(question)).trim();',
-      '    const value = Number(result);',
-      '    if (/^[+-]?\\d+$/.test(result) && Number.isSafeInteger(value)) return value;',
-      '    console.log("Please enter a valid whole number.");',
-      '  }',
-      '}',
-      'async function readFloat(question = "Enter a number:") {',
-      '  while (true) {',
-      '    const result = (await readLine(question)).trim();',
-      '    const value = Number(result);',
-      '    if (/^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$/.test(result) && Number.isFinite(value)) return value;',
-      '    console.log("Please enter a valid number.");',
-      '  }',
-      '}'
     ].join("\n");
   }
 
@@ -77,8 +42,8 @@
     const policy = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; form-action 'none'; base-uri 'none'";
     const head = '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + policy + '"></head><body>';
     const bridge = '<script>' + makeBridge(token).replace(/<\/script/gi, '<\\/script') + '<\/script>';
-    // Students' original JavaScript is not wrapped in a function. Native module
-    // execution allows top-level await for the optional terminal-input helpers.
+    // Students' original JavaScript is not wrapped in a function. Standard
+    // browser prompt() is available via the iframe's allow-modals permission.
     const safeCode = code.replace(/<\/script/gi, '<\\/script');
     const userScript = '<script type="module">\n' + safeCode + '\n;window.__mtComplete();<\/script>';
     return head + bridge + userScript + '</body></html>';
