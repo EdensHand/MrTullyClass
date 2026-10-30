@@ -9,8 +9,10 @@
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./styles.css">
   <script defer src="./assignments.js"></script>
+  <script defer src="./github-config.js"></script>
   <script defer src="./browser-runner.js"></script>
   <script defer src="./app.js"></script>
+  <script type="module" src="./github-first.mjs"></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to assignment workspace</a>
@@ -56,8 +58,8 @@
       <div class="sidebar-spacer"></div>
       <div class="sidebar-info">
         <span class="online-dot" aria-hidden="true"></span>
-        <strong>Local workspace</strong>
-        <p>Your edits stay in this browser. Download your code or export a backup before switching devices.</p>
+        <strong>Local saves + optional GitHub</strong>
+        <p>Guest drafts stay on this device. GitHub users can save code to selected repositories.</p>
         <button id="open-help" type="button" class="text-button">How saving works <span aria-hidden="true">↗</span></button>
       </div>
       <div class="sidebar-bottom">
@@ -70,7 +72,9 @@
       <header class="topbar">
         <div class="topbar-location"><span class="crumb">Classroom</span><span class="crumb-sep">/</span><strong id="current-course-label">CS Fundamentals</strong></div>
         <div class="topbar-actions">
-          <span class="status-pill"><span class="status-dot"></span>No account needed</span>
+          <span class="status-pill"><span class="status-dot"></span><span id="github-identity">Guest · local browser saves</span></span>
+          <button type="button" class="outline-button compact" id="github-signin" hidden>Sign in with GitHub</button>
+          <button type="button" class="outline-button compact" id="github-signout" hidden>Sign out</button>
           <span class="backend-status" id="browser-status" data-state="connected"
                 title="JavaScript executes locally in an isolated browser frame">
             <span class="backend-status-dot" aria-hidden="true"></span>
@@ -88,7 +92,7 @@
           <div class="hero-copy">
             <span class="eyebrow"><span class="eyebrow-line"></span> YOUR SPACE TO BUILD</span>
             <h1 id="hero-title">Think it. <em>Code it.</em><br>Make it happen.</h1>
-            <p>Real code. Real projects. No account setup. Pick a challenge and start building.</p>
+            <p>Real code. Real projects. Start as a guest, or save coursework to a GitHub repository.</p>
             <div class="hero-facts">
               <span><span class="fact-icon">⌘</span> Write actual code</span>
               <span><span class="fact-icon">◷</span> Auto-save in browser</span>
@@ -133,7 +137,7 @@
             </select>
             <div class="lesson-count" id="lesson-count"></div>
             <div id="assignment-list" class="assignment-list"></div>
-            <p class="library-tip">Tip: Your code saves automatically in this browser. For school submissions, download your work and follow your teacher's directions.</p>
+            <p class="library-tip">Drafts always save locally. Sign in with GitHub to save a commit to your selected assignment repository. Submitting is a separate action.</p>
           </aside>
 
           <section class="studio-panel" aria-label="Selected assignment and code editor">
@@ -166,6 +170,10 @@
                   <span class="save-status" id="save-status" role="status" aria-live="polite">Ready</span>
                   <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
                   <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
+                  <button type="button" id="github-connect" class="toolbar-action" hidden>Choose repository</button>
+                  <button type="button" id="github-load" class="toolbar-action" hidden>Load GitHub</button>
+                  <button type="button" id="github-save" class="toolbar-action" hidden>Save GitHub</button>
+                  <button type="button" id="github-submit" class="toolbar-action" hidden>Submit to GitHub</button>
                   <button type="button" id="run-code" class="run-button">▶ Run code</button>
                   <button type="button" id="stop-code" class="toolbar-action" hidden disabled>■ Stop</button>
                 </div>
@@ -194,21 +202,37 @@
                       title="Sandboxed JavaScript execution" tabindex="-1"
                       aria-hidden="true" referrerpolicy="no-referrer" hidden></iframe>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
-              <p class="run-note" id="run-note">Runs JavaScript locally in a sandboxed browser frame. Supports standard console.log() output and native prompt() input dialogs. No custom input functions or paid server required.</p>
+              <p class="run-note" id="run-note">Runs JavaScript locally in a sandboxed browser frame. Supports standard console.log() and prompt(). No paid server required.</p>
+              <p class="run-note" id="github-status" role="status" aria-live="polite">Guest drafts save locally. Optional GitHub saves require setup.</p>
+              <a id="github-submission-link" target="_blank" rel="noopener noreferrer" hidden></a>
               </div>
             </div>
           </section>
         </div>
-        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>No login • No server submissions • Save a backup of important work</span></footer>
+        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>Guest autosave • Optional GitHub commits • Classroom 50 grading</span></footer>
       </main>
     </div>
   </div>
 
+  <dialog id="github-repo-dialog" class="help-dialog">
+    <div class="modal-top"><h2>Choose a GitHub repository</h2></div>
+    <p>Choose a repository authorized for MrTullyClass. Use Assignment mode for Classroom 50 repositories so graders find your source file at the root.</p>
+    <label for="github-repository">GitHub repository</label>
+    <select id="github-repository"></select>
+    <label for="github-repository-mode">File organization</label>
+    <select id="github-repository-mode">
+      <option value="assignment">Assignment repository (root file; supports Classroom 50 grading)</option>
+      <option value="portfolio">Personal portfolio (classwork/course/assignment/)</option>
+    </select>
+    <p>Don't see your assignment? Your teacher must install the GitHub App for its repository and grant you access.</p>
+    <button type="button" id="github-repository-choose" class="run-button">Use this repository</button>
+    <button type="button" id="github-repository-cancel" class="outline-button">Cancel</button>
+  </dialog>
   <dialog id="help-dialog" class="help-dialog">
     <div class="modal-top"><h2>Where does my work go?</h2><button id="close-help" type="button" aria-label="Close help" class="close-button">×</button></div>
-    <p>Your drafts are saved <strong>in this browser on this device</strong> when local storage is available. Pressing Run executes JavaScript inside a sandboxed browser frame. Your code and input are not uploaded to an execution server. This pilot does not link work to a student account or Google Classroom.</p>
+    <p>Drafts save to this browser automatically when local storage is available, even without an account. GitHub sign-in is optional and lets you explicitly save code to repositories authorized for the MrTullyClass GitHub App. Student code still runs locally in the browser.</p>
     <p><strong>Before you leave:</strong> use <strong>Download</strong> to save an individual code file or <strong>Back up work</strong> to save all your drafts. You can restore a backup later with <strong>Import backup</strong>.</p>
-    <p>Do not enter passwords or private information into the code editor or terminal. This site does not give teachers access to student drafts or grades. Follow your teacher's instructions for submitting downloaded files.</p>
+    <p>To submit a Classroom 50 assignment, select its assignment repository and use Submit to GitHub. This creates a Git tag for the grader, which must already be configured by your teacher. Teachers review coursework in GitHub or Classroom 50; this website has no gradebook. Sign out on shared devices.</p>
     <button type="button" id="acknowledge-help" class="run-button">Got it</button>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -645,3 +645,13 @@ body { background: var(--paper); color: var(--ink); }
 
 /* No graphics mode: run JavaScript in a non-visible, opaque-origin iframe. */
 #execution-frame { display: none !important; width: 0; height: 0; border: 0; }
+
+/* GitHub App controls are optional; hide them for unsigned or unconfigured users. */
+#github-signin[hidden],#github-signout[hidden],#github-connect[hidden],
+#github-load[hidden],#github-save[hidden],#github-submit[hidden],
+#github-submission-link[hidden]{display:none!important}
+#github-status{font-size:12px;overflow-wrap:anywhere}
+#github-repo-dialog{max-width:min(540px,95vw)}
+#github-repo-dialog label{display:block;margin-top:12px}
+#github-repo-dialog select{display:block;width:100%;max-width:100%;padding:9px;margin:5px 0 14px;background:#182833;color:#f8fcff;border:1px solid #728692;border-radius:8px}
+#github-repo-dialog button{margin:7px 8px 0 0}
