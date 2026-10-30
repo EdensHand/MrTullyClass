@@ -21,7 +21,6 @@
   let runToken = null;
   let pendingInput = null;
   let inputQueue = [];
-  let runTimer = null;
 
   const $ = function (id) { return document.getElementById(id); };
   const elements = {
@@ -89,12 +88,10 @@
     runToken = null;
     pendingInput = null;
     inputQueue = [];
-    clearTimeout(runTimer);
-    runTimer = null;
     elements.inputForm.hidden = true;
     elements.inputField.value = "";
     elements.frame.srcdoc = "";
-    const stop = $("node-stop");
+    const stop = $("stop-code");
     stop.hidden = true;
     stop.disabled = true;
   }
@@ -367,7 +364,7 @@
       runToken = token;
       elements.frame.srcdoc = documentSource;
       elements.badge.textContent = "Running";
-      const stop = $("node-stop");
+      const stop = $("stop-code");
       stop.hidden = false;
       stop.disabled = false;
       elements.output.textContent = "Running JavaScript in your browser…";
@@ -604,7 +601,7 @@
     $("terminal-cancel").addEventListener("click", function () {
       submitTerminalInput(true);
     });
-    $("node-stop").addEventListener("click", function () {
+    $("stop-code").addEventListener("click", function () {
       if (!runToken) return;
       stopExecution();
       elements.output.textContent += "\n[Stopped by student]\n";
