@@ -194,18 +194,7 @@
                       title="Sandboxed JavaScript execution" tabindex="-1"
                       aria-hidden="true" referrerpolicy="no-referrer" hidden></iframe>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
-              <form id="terminal-input-form" class="terminal-input-form" hidden autocomplete="off">
-                <label id="terminal-input-label" for="terminal-input">Program is waiting for input:</label>
-                <div class="terminal-input-row">
-                  <span class="terminal-prompt" aria-hidden="true">&gt;</span>
-                  <input id="terminal-input" type="text" spellcheck="false" autocomplete="off"
-                         maxlength="500" aria-describedby="terminal-input-help" placeholder="Type your answer and press Enter">
-                  <button type="submit" class="terminal-send">Enter ↵</button>
-                  <button type="button" id="terminal-cancel" class="terminal-cancel">Cancel input</button>
-                </div>
-                <span id="terminal-input-help" class="terminal-input-help">Your response stays in this browser and is sent only to your running JavaScript. Do not enter passwords or private information.</span>
-              </form>
-              <p class="run-note" id="run-note">Runs JavaScript locally in a sandboxed browser frame. Supports console.log(), native prompt() dialogs, and readLine()/readInt()/readFloat() for terminal input. No paid server needed.</p>
+              <p class="run-note" id="run-note">Runs JavaScript locally in a sandboxed browser frame. Supports standard console.log() output and native prompt() input dialogs. No custom input functions or paid server required.</p>
               </div>
             </div>
           </section>

@@ -22,31 +22,41 @@ window.MT_ASSIGNMENTS = [
   {
     id: "csf-user-input", course: "CSF", type: "javascript",
     unit: "Getting Started", title: "Interactive Conversation",
-    time: "Beginner", label: "Terminal input",
-    summary: "Ask questions and respond to what someone types in the browser terminal.",
+    time: "Beginner", label: "Browser input",
+    summary: "Use standard browser prompt() dialogs, check for Cancel, and respond with console.log().",
     objectives: [
-      "Use await readLine() for text input.",
-      "Use await readInt() for a whole number.",
-      "Print a result based on the student's answers."
+      "Use prompt() to ask a question and capture a text response.",
+      "Handle a cancelled prompt, which returns null.",
+      "Convert numeric text with Number() and validate it before calculating."
     ],
     steps: [
-      "Press Run and answer both questions in the terminal.",
+      "Press Run, enter a name, and choose a whole number in the browser dialogs.",
       "Change the first question to something original.",
-      "Ask for a second whole number, then print the sum.",
-      "Try readFloat() for a decimal number."
+      "Ask for another number and print the sum of the two numbers.",
+      "Try Cancel and an invalid number to see how your code responds."
     ],
-    stretch: "Create a mini-quiz with different messages for correct and incorrect answers.",
+    stretch: "Write a two-question quiz using prompt() and report correct and incorrect answers with console.log().",
     code: [
-      "// This browser-based classroom terminal supports await readLine().",
-      "// No Node.js imports are needed.",
-      "const name = await readLine(\"What name should I call you?\");",
-      "const favoriteNumber = await readInt(\"Choose a whole number:\");",
+      "// prompt() is a standard browser API; Cancel returns null.",
+      "const name = prompt(\"What name should I call you?\");",
       "",
-      "console.log(\"Hello, \" + name + \"!\");",
-      "console.log(\"Twice your number is \" + (favoriteNumber * 2));",
-      "",
-      "// TODO: Ask for another whole number and print their sum.",
-      "// TODO: Try await readFloat() for a decimal."
+      "if (name !== null) {",
+      "  const numberText = prompt(\"Choose a whole number:\");",
+      "  if (numberText !== null) {",
+      "    const favoriteNumber = Number(numberText);",
+      "    if (numberText.trim() !== \"\" && Number.isInteger(favoriteNumber)) {",
+      "      console.log(\"Hello, \" + name + \"!\");",
+      "      console.log(\"Twice your number is \" + (favoriteNumber * 2));",
+      "      // TODO: Ask for another number and print their sum.",
+      "    } else {",
+      "      console.log(\"Please enter a valid whole number.\");",
+      "    }",
+      "  } else {",
+      "    console.log(\"Number entry cancelled.\");",
+      "  }",
+      "} else {",
+      "  console.log(\"Name entry cancelled.\");",
+      "}"
     ].join("\n")
   },
   {

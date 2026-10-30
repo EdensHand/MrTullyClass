@@ -10,25 +10,22 @@ Student JavaScript runs **inside the student's own browser**, not on Render, Nod
 
 Console output, warnings, errors and terminal input pass between the iframe and main page via token-checked postMessage events. The logging/error bridge is **adapted with permission from [Ms. Whitby's Playground](https://github.com/mswhitby/playground)**, especially public/console-drawer.mjs and public/mobile.mjs. This repo does not duplicate that project's unrelated course content, accounts, C# or Java systems.
 
-### Console input
+### Standard browser input with `prompt()`
 
-The browser runner provides optional classroom-only asynchronous helper functions:
+MrTullyClass teaches standard **browser JavaScript**. Use `console.log()` for output and `prompt()` for synchronous input. The browser shows a dialog, which returns the entered string, or `null` if the student presses Cancel:
 
-    const name = await readLine("What is your name?");
-    const age = await readInt("Your age?");
-    const height = await readFloat("Your height?");
-    console.log(name, age, height);
+```javascript
+const userInput = prompt("Please enter your name:");
+if (userInput !== null) {
+  console.log("User entered:", userInput);
+}
+```
 
-The student presses Run, types each response into the terminal and presses Enter. These helpers are not built-in JavaScript features and are not Node.js process.stdin. Inline browser ES modules permit top-level await.
+For numbers, convert explicitly with `Number()`, then validate with `Number.isInteger()` or `Number.isFinite()`. Since `prompt()` returns text, `Number("")` is zero; guard against blank responses as well.
 
-### Browser-native `prompt()`
+**No custom input functions** such as `readLine()`, `readInt()`, `readFloat()`, or CodeHS `println()` are provided. This keeps the syntax consistent with standard browser JavaScript. Older locally saved input lessons are not overwritten; download those drafts if needed and click **Reset starter** to load the new prompt-based example.
 
-Standard synchronous `prompt("Please enter your name:")` is supported using the browser's native input dialog. Cancel returns `null`. The hidden execution iframe grants `allow-modals` while **remaining opaque-origin**, so the student's code does not receive access to the main page.
-
-Use standard `console.log(value)` for output. CodeHS's custom `println()` function is **not** added. Browser or district policies can suppress native dialogs, so test `prompt()` on student devices before assigning it; `await readLine()` remains available for inline terminal input.
-
-
-Existing drafts based on Node.js readline will not work in a browser. Download them if important, then use Reset starter to load the revised input exercise.
+The execution iframe uses `sandbox="allow-scripts allow-modals"` without `allow-same-origin`. Some browsers, especially managed school installations, may restrict JavaScript dialogs inside sandboxed iframes. If the prompt does not appear, check the browser settings and test on the school devices; the sandbox should not be weakened by adding same-origin privileges.
 
 ### Current scope and limitations
 
