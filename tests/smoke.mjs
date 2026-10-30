@@ -36,7 +36,7 @@ for (const course of allowedCourses) {
 for (const type of allowedTypes) {
   assert.ok(catalog.some((lesson) => lesson.type === type), "No lessons of type " + type);
 }
-for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input", "node-stop", "download-code", "export-work", "backup-file"]) {
+for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input", "stop-code", "download-code", "export-work", "backup-file"]) {
   assert.ok(html.includes('id="' + id + '"'), "Required element is missing: " + id);
 }
 assert.ok(!html.includes('id="preview-frame"') && !html.includes('id="js-runtime-mode"'),
@@ -60,27 +60,45 @@ assert.ok(appJs.includes("initSplitWorkspace()") &&
           appJs.includes('divider.addEventListener("keydown"') &&
           appJs.includes("setPointerCapture") &&
           appJs.includes("splitterKey"), "Resizer drag, keyboard controls and preference saving must exist");
-assert.ok(html.includes('id="backend-status"') && html.includes('id="backend-status-text"'), "Render backend connection control should exist");
-assert.ok(appJs.includes('https://mrtullyclass-backend.onrender.com/health') && appJs.includes('async function checkBackendHealth()'), "Backend connection must target the provided Render health URL");
-assert.ok(appJs.includes('data.codeExecutionEnabled !== false') && appJs.includes('credentials: "omit"'), "Health check must verify backend response without credentials");
-assert.ok(appJs.includes('button.addEventListener') || appJs.includes('"backend-status").addEventListener("click", checkBackendHealth)'), "Backend health status must be retryable");
-assert.ok(css.includes('.backend-status[data-state="connected"]'), "Connection-state styling is required");
-assert.ok(html.includes('id="node-stop"') && html.includes('id="console-output"'),
-  "Single Node.js terminal and stop control must exist");
-assert.ok(appJs.includes('function runNodeCode(code)') &&
-          appJs.includes('new WebSocket(socketUrl)') &&
-          appJs.includes('type: "stdin"') &&
-          appJs.includes('type: "run"'), "Node.js WebSocket runner and stdin must exist");
-assert.ok(appJs.includes('if (!runnerAvailable)') && appJs.includes("nodeAccessKey"),
-          "Node.js must require an enabled server and an access key");
+assert.ok(html.includes('id="browser-status"') && html.includes("Browser: Ready"),
+  "JavaScript status should say it is browser-based");
+assert.ok(html.includes('id="execution-frame"') &&
+          html.includes('sandbox="allow-scripts"') &&
+          !html.includes('allow-same-origin'),
+  "Programs must run inside an opaque-origin iframe with scripts only");
+assert.ok(html.includes('id="stop-code"') && html.includes('id="console-output"'),
+  "One console and Stop button must exist");
+assert.ok(html.includes('src="./browser-runner.js"'),
+  "Load reusable browser runner before the workspace controller");
+assert.ok(appJs.includes('window.MTBrowserRunner.buildDocument(code, token)') &&
+          appJs.includes("handleSandboxMessage") &&
+          appJs.includes("submitTerminalInput(false)"),
+  "Run, console output, and input must use browser messaging");
+assert.ok(!appJs.includes("mrtullyclass-backend.onrender.com") &&
+          !appJs.includes("RUNNER_ACCESS_TOKEN") &&
+          !appJs.includes("E2B_API_KEY"),
+  "Classroom JavaScript must not use the paid cloud runner");
+
 assert.ok(css.includes(".terminal-input-form[hidden]"), "Hidden terminal input form must stay hidden");
-assert.ok(appJs.includes('function runCode()') && appJs.includes('runNodeCode(code);'),
-  "Run must always execute JavaScript using the Node.js runner");
-assert.ok(!appJs.includes('js-runtime-mode') && !appJs.includes('srcdoc') &&
-          !appJs.includes('function sandboxCsp()') && !appJs.includes('mt-class-input-response'),
-  "Legacy browser runner and custom input bridge must be removed");
+assert.ok(appJs.includes('function runCode()') && appJs.includes('window.MTBrowserRunner.buildDocument(code, token)'),
+  "Run must always execute JavaScript using the browser runner");
+assert.ok(!appJs.includes('js-runtime-mode') && !appJs.includes('function sandboxCsp()') &&
+          !appJs.includes('new WebSocket('),
+  "No old execution modes or paid remote runner should remain");
 assert.ok(appJs.includes('function isRunnableLesson(lesson)') &&
           appJs.includes('lesson.id !== "cs3-canvas"') &&
           appJs.includes('lesson.id !== "cs3-movement"'),
   "Graphical assignments must remain non-runnable until the graphics runtime is introduced");
+assert.ok(appJs.includes('if (!isRunnableLesson(currentLesson)) return;') &&
+          appJs.includes('lesson.id !== "cs3-canvas"') &&
+          appJs.includes('lesson.id !== "cs3-movement"'),
+  "Graphics stay disabled until we build a dedicated graphics environment");
+const runner = fs.readFileSync("browser-runner.js", "utf8");
+assert.ok(runner.includes("Ms. Whitby's Playground") &&
+          runner.includes("postMessage") &&
+          runner.includes("window.onerror") &&
+          runner.includes("onunhandledrejection"),
+  "Browser console bridge must retain credited, error-capturing behavior");
+assert.ok(!html.includes('id="js-runtime-mode"'),
+  "One runtime means no JavaScript mode selector");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");

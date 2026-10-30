@@ -21,6 +21,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check app.js
+          node --check browser-runner.js
           node --check assignments.js
           node --check tests/smoke.mjs
           node --check tests/input.mjs

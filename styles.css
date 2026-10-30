@@ -700,10 +700,13 @@ body { background: var(--paper); color: var(--ink); }
 
 /* Isolated Node.js terminal controls */
 .terminal-input-form[hidden],
-#node-stop[hidden] { display: none !important; }
-#node-stop {
+#stop-code[hidden] { display: none !important; }
+#stop-code {
   border-color: #a7836d;
   color: #ffdbc4;
   background: #5c403b;
 }
-#node-stop:hover:not(:disabled) { background: #704b44; }
+#stop-code:hover:not(:disabled) { background: #704b44; }
+
+/* No graphics mode: run JavaScript in a non-visible, opaque-origin iframe. */
+#execution-frame { display: none !important; width: 0; height: 0; border: 0; }

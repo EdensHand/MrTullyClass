@@ -1,66 +1,52 @@
-# MrTullyClass — Coding Workspace
+# MrTullyClass — Browser JavaScript classroom workspace
 
-A student coding and assignment website for CS Fundamentals (CSF), Computer Science 3 (CS3), and AP Computer Science A (AP CSA). The frontend is hosted on GitHub Pages.
+**Free GitHub Pages site:** https://edenshand.github.io/MrTullyClass/
 
-## One JavaScript runtime
+MrTullyClass is a static, no-login learning space with one editor, one Run code button, one output terminal, CSF/CS3/AP CSA assignments, autosaved drafts, downloads and backups.
 
-**JavaScript assignments have exactly one Run button and one terminal: Node.js.** There is no ES-module/classic/Node chooser or browser-side interpreter. The editor submits the current JavaScript source to the [MrTullyClass-Backend](https://github.com/EdensHand/MrTullyClass-Backend) Render gateway over an authenticated WebSocket. The gateway runs it as `main.js` in a separate isolated E2B Node.js sandbox and streams stdout, stderr, and interactive stdin through the same terminal.
+## Zero-cost JavaScript execution
 
-Students write ordinary Node.js code, such as:
+Student JavaScript runs **inside the student's own browser**, not on Render, Node.js, E2B or Cloudflare. Code executes in an opaque-origin iframe sandbox with a restrictive Content Security Policy. It cannot access the parent website's DOM or saved drafts and cannot make network requests. No third-party execution credentials are required.
 
-```javascript
-const readline = require("node:readline/promises");
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+Console output, warnings, errors and terminal input pass between the iframe and main page via token-checked postMessage events. The logging/error bridge is **adapted with permission from [Ms. Whitby's Playground](https://github.com/mswhitby/playground)**, especially public/console-drawer.mjs and public/mobile.mjs. This repo does not duplicate that project's unrelated course content, accounts, C# or Java systems.
 
-async function main() {
-  try {
-    const name = await rl.question("Your name? ");
-    console.log("Hello, " + name);
-  } finally {
-    rl.close();
-  }
-}
-main().catch(console.error);
-```
+### Console input
 
-When a program is waiting for input, the student types into the terminal and presses Enter. **There are no special MrTullyClass-only input commands.**
+The browser runner provides optional classroom-only asynchronous helper functions:
 
-### Current limits
+    const name = await readLine("What is your name?");
+    const age = await readInt("Your age?");
+    const height = await readFloat("Your height?");
+    console.log(name, age, height);
 
-- The Node.js terminal **cannot be used until the instructor configures E2B_API_KEY and RUNNER_ACCESS_TOKEN in Render**. The current connection-status indicator shows whether remote execution is enabled. The shared instructor access token is prompted for at first run and kept in page memory only; it is **not** suitable for general student distribution.
-- The E2B runner has a 90-second process timeout and bounded output, with rate and concurrency limits. E2B charges may apply. Never share the E2B API key with students or place it in the frontend.
-- **Browser graphics are deferred.** Existing canvas, keyboard-movement, and HTML/webpage lessons remain editable and downloadable, but their Run buttons are disabled until a separate graphical execution environment is designed.
-- AP CSA Java source assignments remain edit/download only. **Java is not executed by the Node.js terminal.**
+The student presses Run, types each response into the terminal and presses Enter. These helpers are not built-in JavaScript features and are not Node.js process.stdin. Inline browser ES modules permit top-level await.
 
-## Student features
+Existing drafts based on Node.js readline will not work in a browser. Download them if important, then use Reset starter to load the revised input exercise.
 
-- Select CSF, CS3, or AP CSA assignments; search and filter lessons.
-- Edit real source code with automatic draft saving to localStorage on the same device.
-- For supported JavaScript lessons: Run, Stop, stdout/stderr, and stdin in one adjustable side-by-side code/terminal layout.
-- Collapse the sidebar, resize the panels by dragging the divider, and press Ctrl/Cmd + Enter to run JavaScript.
-- Download source files, mark local completion, export and import draft backups.
+### Current scope and limitations
 
-## Privacy and deployment
-
-The site has **no student accounts, synced submissions, cloud draft storage, teacher dashboard, or grades**. Drafts are saved on the local device unless students explicitly download or export a backup. **When students press Run, their JavaScript source and terminal input are sent to the Render gateway and the isolated E2B sandbox for execution.** Do not type private or sensitive information.
-
-The public frontend is at https://edenshand.github.io/MrTullyClass/ and remains on GitHub Pages. The health endpoint is at https://mrtullyclass-backend.onrender.com/health. The backend must be configured independently before remote execution works; this repository alone does not provide a Node.js server.
-
-To run the frontend locally, serve it over HTTP, e.g. `python -m http.server 8000`, and open http://localhost:8000/. The server's WebSocket allows that origin for local instructor tests.
+- Standard JavaScript console exercises, logging, errors and input work locally in the browser.
+- No logins, server-side submissions or trusted grading. Drafts are saved locally unless explicitly downloaded/exported.
+- AP CSA Java, HTML and canvas/movement graphics lessons remain edit/download only until we design their execution environments separately.
+- This is a learning sandbox, not an isolation boundary for hostile code. An endless synchronous loop can hang a browser tab; reload to escape. Stop replaces the execution iframe, but it cannot interrupt a main-thread infinite loop reliably.
+- External imports, network access and forms are blocked from student JavaScript for safety.
 
 ## Development
 
-```sh
-node --check app.js
-node --check assignments.js
-node tests/smoke.mjs
-node tests/input.mjs
-```
+No build step, paid services or npm packages are required. Files are served by GitHub Pages.
 
-Keep lesson IDs stable; browser drafts are keyed by assignment ID. For a previously saved version of a lesson that used the old `readLine()` helper, select **Reset starter** to load the current Node.js starter code; download old edits first if needed.
+    node --check app.js
+    node --check browser-runner.js
+    node --check assignments.js
+    node tests/smoke.mjs
+    node tests/input.mjs
 
-See the [backend README](https://github.com/EdensHand/MrTullyClass-Backend) for sandbox prerequisites, security limits, and test instructions.
+The GitHub Actions workflow runs the same checks on pull requests and main updates. The earlier experimental free-browser-nodejs branch is not required for this design.
 
-## License
+## Retiring the unused backend
 
-Classroom pilot materials © their original author(s). No license for third-party reuse has been granted in this repository.
+The live website no longer uses Render or E2B. Once the browser terminal is verified on classroom devices, disable the Keep Render backend warm GitHub Actions schedule, suspend/delete the Render backend, and revoke any unused E2B key after checking that account's billing settings.
+
+## Credits
+
+Browser console bridge adapted from Ms. Whitby's Playground with the project owner's permission. Other artwork and course material remain attributable to their respective creators.
