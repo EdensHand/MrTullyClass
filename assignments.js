@@ -22,42 +22,31 @@ window.MT_ASSIGNMENTS = [
   {
     id: "csf-user-input", course: "CSF", type: "javascript",
     unit: "Getting Started", title: "Interactive Conversation",
-    time: "Beginner", label: "Node.js terminal input",
-    summary: "Ask questions using real Node.js readline and react to whatever your user types.",
+    time: "Beginner", label: "Terminal input",
+    summary: "Ask questions and respond to what someone types in the browser terminal.",
     objectives: [
-      "Create a readline interface using a standard Node.js module.",
-      "Use question() to read input from the terminal.",
-      "Convert text to a number before calculating."
+      "Use await readLine() for text input.",
+      "Use await readInt() for a whole number.",
+      "Print a result based on the student's answers."
     ],
     steps: [
-      "Press Run and answer the prompts in the terminal on the right.",
+      "Press Run and answer both questions in the terminal.",
       "Change the first question to something original.",
-      "Ask for a second number and print the sum of both numbers.",
-      "Add an if statement to respond differently based on the user's answer."
+      "Ask for a second whole number, then print the sum.",
+      "Try readFloat() for a decimal number."
     ],
-    stretch: "Make a two-question interactive quiz with different responses to correct and incorrect answers.",
+    stretch: "Create a mini-quiz with different messages for correct and incorrect answers.",
     code: [
-      "// Normal Node.js: the same code runs in a desktop terminal.",
-      "const readline = require(\"node:readline/promises\");",
-      "const rl = readline.createInterface({",
-      "  input: process.stdin,",
-      "  output: process.stdout",
-      "});",
+      "// This browser-based classroom terminal supports await readLine().",
+      "// No Node.js imports are needed.",
+      "const name = await readLine(\"What name should I call you?\");",
+      "const favoriteNumber = await readInt(\"Choose a whole number:\");",
       "",
-      "async function main() {",
-      "  try {",
-      "    const name = await rl.question(\"What is your name? \");",
-      "    const answer = await rl.question(\"Choose a whole number: \");",
-      "    const number = Number(answer);",
-      "    console.log(\"Hello, \" + name + \"!\");",
-      "    console.log(\"Twice your number is \" + (number * 2));",
-      "    // TODO: Ask for another number and print the sum.",
-      "  } finally {",
-      "    rl.close();",
-      "  }",
-      "}",
+      "console.log(\"Hello, \" + name + \"!\");",
+      "console.log(\"Twice your number is \" + (favoriteNumber * 2));",
       "",
-      "main().catch(console.error);"
+      "// TODO: Ask for another whole number and print their sum.",
+      "// TODO: Try await readFloat() for a decimal."
     ].join("\n")
   },
   {
