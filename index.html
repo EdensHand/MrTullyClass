@@ -9,6 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./styles.css">
   <script defer src="./assignments.js"></script>
+  <script defer src="./browser-runner.js"></script>
   <script defer src="./app.js"></script>
 </head>
 <body>
@@ -70,12 +71,11 @@
         <div class="topbar-location"><span class="crumb">Classroom</span><span class="crumb-sep">/</span><strong id="current-course-label">CS Fundamentals</strong></div>
         <div class="topbar-actions">
           <span class="status-pill"><span class="status-dot"></span>No account needed</span>
-          <button type="button" class="backend-status" id="backend-status" data-state="idle"
-                  title="Check Render backend connection (status check only; code still runs in your browser)">
+          <span class="backend-status" id="browser-status" data-state="connected"
+                title="JavaScript executes locally in an isolated browser frame">
             <span class="backend-status-dot" aria-hidden="true"></span>
-            <span id="backend-status-text" role="status" aria-live="polite">Render: Not checked</span>
-            <span class="backend-status-refresh" aria-hidden="true">↻</span>
-          </button>
+            <span id="browser-status-text">Browser: Ready</span>
+          </span>
           <button type="button" class="outline-button compact" id="topbar-help">Help &amp; saving</button>
           <button type="button" class="outline-button compact" id="import-work">Import backup</button>
           <button type="button" class="outline-button compact" id="export-work">Back up work ↓</button>
@@ -167,7 +167,7 @@
                   <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
                   <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
                   <button type="button" id="run-code" class="run-button">▶ Run code</button>
-                  <button type="button" id="node-stop" class="toolbar-action" hidden disabled>■ Stop</button>
+                  <button type="button" id="stop-code" class="toolbar-action" hidden disabled>■ Stop</button>
                 </div>
               </div>
               <label class="sr-only" for="code-editor">Code editor</label>
@@ -187,22 +187,25 @@
 
               <div class="result-card" id="result-card">
               <div class="result-head">
-                <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">Node.js terminal</strong><span class="result-badge" id="result-badge">Not run</span></div>
+                <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">JavaScript terminal</strong><span class="result-badge" id="result-badge">Not run</span></div>
                 <button type="button" class="text-button" id="clear-output">Clear output</button>
               </div>
+              <iframe id="execution-frame" sandbox="allow-scripts"
+                      title="Sandboxed JavaScript execution" tabindex="-1"
+                      aria-hidden="true" referrerpolicy="no-referrer" hidden></iframe>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
               <form id="terminal-input-form" class="terminal-input-form" hidden autocomplete="off">
-                <label id="terminal-input-label" for="terminal-input">Terminal input (stdin)</label>
+                <label id="terminal-input-label" for="terminal-input">Program is waiting for input:</label>
                 <div class="terminal-input-row">
                   <span class="terminal-prompt" aria-hidden="true">&gt;</span>
                   <input id="terminal-input" type="text" spellcheck="false" autocomplete="off"
                          maxlength="500" aria-describedby="terminal-input-help" placeholder="Type your answer and press Enter">
                   <button type="submit" class="terminal-send">Enter ↵</button>
-                  <button type="button" id="terminal-cancel" class="terminal-cancel">Stop program</button>
+                  <button type="button" id="terminal-cancel" class="terminal-cancel">Cancel input</button>
                 </div>
-                <span id="terminal-input-help" class="terminal-input-help">Your input goes to the isolated Node.js process through Render. Do not enter passwords or personal information.</span>
+                <span id="terminal-input-help" class="terminal-input-help">Your response stays in this browser and is sent only to your running JavaScript. Do not enter passwords or private information.</span>
               </form>
-              <p class="run-note" id="run-note">Run executes main.js in an isolated Node.js sandbox through Render. Requires instructor setup; source code and terminal input leave this browser.</p>
+              <p class="run-note" id="run-note">Runs JavaScript locally inside an isolated browser frame, with console output and optional readLine(), readInt(), and readFloat() input. No paid server needed.</p>
               </div>
             </div>
           </section>
@@ -214,9 +217,9 @@
 
   <dialog id="help-dialog" class="help-dialog">
     <div class="modal-top"><h2>Where does my work go?</h2><button id="close-help" type="button" aria-label="Close help" class="close-button">×</button></div>
-    <p>Your drafts are saved <strong>in this browser on this device</strong> when local storage is available. Pressing Run sends the current JavaScript source and terminal input through Render to an isolated Node.js sandbox. This pilot does not link work to a student account or Google Classroom.</p>
+    <p>Your drafts are saved <strong>in this browser on this device</strong> when local storage is available. Pressing Run executes JavaScript inside a sandboxed browser frame. Your code and input are not uploaded to an execution server. This pilot does not link work to a student account or Google Classroom.</p>
     <p><strong>Before you leave:</strong> use <strong>Download</strong> to save an individual code file or <strong>Back up work</strong> to save all your drafts. You can restore a backup later with <strong>Import backup</strong>.</p>
-    <p>Do not enter passwords or private information into the code editor or terminal. This service does not give teachers access to student drafts or grades. Follow your teacher's instructions for submitting downloaded files.</p>
+    <p>Do not enter passwords or private information into the code editor or terminal. This site does not give teachers access to student drafts or grades. Follow your teacher's instructions for submitting downloaded files.</p>
     <button type="button" id="acknowledge-help" class="run-button">Got it</button>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
