@@ -164,7 +164,7 @@ async function openClasses(){
   const dlg=el("classes-dialog"), area=el("classes-content");
   if(!dlg||!area)return;
   area.replaceChildren(node("p","Loading classes…"));
-  dlg.showModal();
+  if(!dlg.open)dlg.showModal();
   await refreshClasses();
   if(!dlg.open)return;
   area.replaceChildren();
