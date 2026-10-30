@@ -23,9 +23,19 @@
       alert(error?.message || "Submission did not finish. Your local draft is saved.");
     } finally { button.disabled = false; }
   }
+  function saveCurrentBeforeNavigation() {
+    const id=decodeURIComponent(location.hash.slice(1));
+    const lesson=(window.MT_ASSIGNMENTS||[]).find(l=>l.id===id);
+    if(!lesson)return;
+    try {
+      const key="mrtullyclass:v1:draft:"+id;
+      if(window.MTAccount?.storage)window.MTAccount.storage.setItem(key,$("code-editor").value);
+      else localStorage.setItem(key,$("code-editor").value);
+    } catch (_) { /* The existing download/backup option remains available. */ }
+  }
   function start() {
-    bind("account-signin", () => window.MTAccount?.signIn());
-    bind("account-signout", () => window.MTAccount?.signOut());
+    bind("account-signin", () => { saveCurrentBeforeNavigation(); window.MTAccount?.signIn(); });
+    bind("account-signout", () => { saveCurrentBeforeNavigation(); window.MTAccount?.signOut(); });
     bind("account-classes", () => window.MTAccount?.openClasses());
     bind("account-import-guest", () => window.MTAccount?.importGuest());
     bind("submit-work", () => void submit());
