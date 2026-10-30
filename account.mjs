@@ -72,8 +72,9 @@ async function signOut(){
   if(!client||!user)return;
   await flush();
   if(queue.length){if(!confirm("Some changes have not synced. Download a copy and sign out anyway?"))return;backupPending();}
+  account.signingOut=true;
   const oldUser=user;const {error}=await client.auth.signOut({scope:"local"});
-  if(error){notify("Could not sign out; please retry.");return;}
+  if(error){account.signingOut=false;notify("Could not sign out; please retry.");return;}
   storage.clearAccount();
   // Prevent pagehide's editor autosave from rewriting account work after sign-out.
   account.signingOut=true;
@@ -301,7 +302,7 @@ async function initialize(){
       notify(queue.length?"Signed in · unsynced work":"Signed in as "+(user.user_metadata?.user_name||"GitHub student")+" · cloud save ready");
     }else notify("Guest mode · saved only on this device");
     client.auth.onAuthStateChange((event,session)=>{
-      if(event==="SIGNED_OUT"||(session?.user?.id||null)!==(user?.id||null))location.reload();
+      if(!account.signingOut&&(event==="SIGNED_OUT"||(session?.user?.id||null)!==(user?.id||null)))location.reload();
     });
     window.addEventListener("online",()=>void flush());
     document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")void flush();});
