@@ -232,4 +232,17 @@ grant execute on function public.mrtully_my_classes(),public.mrtully_create_clas
  public.mrtully_join_class(text,text),public.mrtully_teacher_roster(uuid),
  public.mrtully_set_member_status(uuid,uuid,text),public.mrtully_teacher_submissions(uuid)
  to authenticated;
+
+-- Verified GitHub identity of the current signed-in user.
+-- Used server-side before any GitHub repository write.
+create function public.mrtully_my_github_provider_id() returns text
+language sql stable security definer set search_path='' as $
+  select i.provider_id
+  from auth.identities i
+  where i.user_id=(select auth.uid()) and i.provider='github'
+  order by i.updated_at desc limit 1
+$;
+revoke all on function public.mrtully_my_github_provider_id() from public,anon,authenticated;
+grant execute on function public.mrtully_my_github_provider_id() to authenticated;
+
 commit;

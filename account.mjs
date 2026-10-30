@@ -271,7 +271,12 @@ const account={
   get enabled(){return enabled;},get signedIn(){return !!user;},get ready(){return booted;},
   get user(){return user;},get pending(){return queue.length;},
   get storage(){return storage;},get classes(){return classes;},
-  signingOut:false,signIn,signOut,submitWork,refreshClasses,openClasses,importGuest,flush
+  signingOut:false,signIn,signOut,submitWork,refreshClasses,openClasses,importGuest,flush,
+  async getAccessToken() {
+    if (!client || !user) return null;
+    const {data,error}=await client.auth.getSession();
+    return error?null:data.session?.access_token||null;
+  }
 };
 window.MTAccount=account;
 

@@ -132,9 +132,8 @@ Deno.serve(async (request) => {
     if(String(repoInfo.body.owner?.id)!==githubId ||
        String(repoInfo.body.full_name).toLowerCase()!==input.repository.toLowerCase() ||
        repoInfo.body.owner?.type!=="User") return fail("Only repositories owned by your signed-in GitHub account are allowed.",403);
-    if(!repoInfo.body.permissions?.push) {
-      return fail("The selected repository does not allow writing.",403);
-    }
+    // Contents: write was restricted in the installation token above.
+    // GitHub validates protected branches and actual write permission on PUT.
     if(input.action==="check") return reply({repository:repoInfo.body.full_name,private:repoInfo.body.private});
 
     const ref=repoInfo.body.default_branch;
