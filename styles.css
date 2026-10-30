@@ -645,3 +645,11 @@ body { background: var(--paper); color: var(--ink); }
 
 /* No graphics mode: run JavaScript in a non-visible, opaque-origin iframe. */
 #execution-frame { display: none !important; width: 0; height: 0; border: 0; }
+
+/* Optional account controls */
+#account-signin[hidden],#account-signout[hidden],#account-classes[hidden],#account-import-guest[hidden],#submit-work[hidden]{display:none!important}
+#account-status{font-size:11px}
+#classes-content{display:grid;gap:12px;max-height:58vh;overflow:auto}
+.account-class-join{display:flex;flex-wrap:wrap;gap:9px}
+.account-class-join input,.account-class-join select{padding:9px;flex:1;min-width:120px;border-radius:7px}
+.submission-source{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;padding:10px}
