@@ -22,7 +22,7 @@ function notify(value) {
   if(el("account-signin"))el("account-signin").hidden=!enabled||!!user;
   if(el("account-signout"))el("account-signout").hidden=!user;
   if(el("account-classes"))el("account-classes").hidden=!user;
-  if(el("account-guest-import"))el("account-guest-import").hidden=!user;
+  if(el("account-import-guest"))el("account-import-guest").hidden=!user;
   if(el("submit-work"))el("submit-work").hidden=!user;
   document.dispatchEvent(new CustomEvent("mrtully-account-status",{detail:{signedIn:!!user,pending:queue.length}}));
 }
@@ -30,9 +30,11 @@ function getQueueKey(){return queuePrefix+user.id;}
 function persistQueue(){if(user)browserStorage.setItem(getQueueKey(),JSON.stringify(queue));}
 function enqueue(key,value) {
   const meta=resourceForKey(key,LESSONS);if(!user||!meta)return;
-  const existing=queue.find(task=>task.key===key);
-  if(existing){existing.value=value;}
-  else queue.push({key,value,expected:revisions.get(meta.lessonId)||0});
+  const index=queue.findIndex(task=>task.key===key);
+  const expected=index>=0?queue[index].expected:(revisions.get(meta.lessonId)||0);
+  const next={key,value,expected};
+  if(index>=0)queue[index]=next;
+  else queue.push(next);
   persistQueue();notify("Saved on this device · "+queue.length+" change(s) syncing");
   clearTimeout(flushTimer);flushTimer=setTimeout(()=>void flush(),1200);
 }
@@ -73,6 +75,10 @@ async function signOut(){
   const oldUser=user;const {error}=await client.auth.signOut({scope:"local"});
   if(error){notify("Could not sign out; please retry.");return;}
   storage.clearAccount();
+  // Prevent pagehide's editor autosave from rewriting account work after sign-out.
+  account.signingOut=true;
+  storage={getItem(){return null;},setItem(){},removeItem(){}};
+  user=null;
   try{if(!queue.length)browserStorage.removeItem(queuePrefix+oldUser.id)}catch{}
   location.reload();
 }
@@ -264,7 +270,7 @@ const account={
   get enabled(){return enabled;},get signedIn(){return !!user;},get ready(){return booted;},
   get user(){return user;},get pending(){return queue.length;},
   get storage(){return storage;},get classes(){return classes;},
-  signIn,signOut,submitWork,refreshClasses,openClasses,importGuest,flush
+  signingOut:false,signIn,signOut,submitWork,refreshClasses,openClasses,importGuest,flush
 };
 window.MTAccount=account;
 
