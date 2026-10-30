@@ -63,9 +63,9 @@ assert.ok(appJs.includes("initSplitWorkspace()") &&
 assert.ok(html.includes('id="browser-status"') && html.includes("Browser: Ready"),
   "JavaScript status should say it is browser-based");
 assert.ok(html.includes('id="execution-frame"') &&
-          html.includes('sandbox="allow-scripts"') &&
+          html.includes('sandbox="allow-scripts allow-modals"') &&
           !html.includes('allow-same-origin'),
-  "Programs must run inside an opaque-origin iframe with scripts only");
+  "Programs must stay opaque-origin while permitting native prompt dialogs");
 assert.ok(html.includes('id="stop-code"') && html.includes('id="console-output"'),
   "One console and Stop button must exist");
 assert.ok(html.includes('src="./browser-runner.js"'),

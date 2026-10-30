@@ -190,7 +190,7 @@
                 <div><span class="result-spark" aria-hidden="true">◉</span><strong id="result-label">JavaScript terminal</strong><span class="result-badge" id="result-badge">Not run</span></div>
                 <button type="button" class="text-button" id="clear-output">Clear output</button>
               </div>
-              <iframe id="execution-frame" sandbox="allow-scripts"
+              <iframe id="execution-frame" sandbox="allow-scripts allow-modals"
                       title="Sandboxed JavaScript execution" tabindex="-1"
                       aria-hidden="true" referrerpolicy="no-referrer" hidden></iframe>
               <pre id="console-output" class="console-output" aria-live="polite">Run your program to see its output here.</pre>
@@ -205,7 +205,7 @@
                 </div>
                 <span id="terminal-input-help" class="terminal-input-help">Your response stays in this browser and is sent only to your running JavaScript. Do not enter passwords or private information.</span>
               </form>
-              <p class="run-note" id="run-note">Runs JavaScript locally inside an isolated browser frame, with console output and optional readLine(), readInt(), and readFloat() input. No paid server needed.</p>
+              <p class="run-note" id="run-note">Runs JavaScript locally in a sandboxed browser frame. Supports console.log(), native prompt() dialogs, and readLine()/readInt()/readFloat() for terminal input. No paid server needed.</p>
               </div>
             </div>
           </section>
