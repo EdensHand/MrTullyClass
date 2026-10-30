@@ -36,7 +36,7 @@ for (const course of allowedCourses) {
 for (const type of allowedTypes) {
   assert.ok(catalog.some((lesson) => lesson.type === type), "No lessons of type " + type);
 }
-for (const id of ["assignment-list", "code-editor", "run-code", "terminal-input", "stop-code", "download-code", "export-work", "backup-file"]) {
+for (const id of ["assignment-list", "code-editor", "run-code", "stop-code", "download-code", "export-work", "backup-file"]) {
   assert.ok(html.includes('id="' + id + '"'), "Required element is missing: " + id);
 }
 assert.ok(!html.includes('id="preview-frame"') && !html.includes('id="js-runtime-mode"'),
@@ -72,14 +72,18 @@ assert.ok(html.includes('src="./browser-runner.js"'),
   "Load reusable browser runner before the workspace controller");
 assert.ok(appJs.includes('window.MTBrowserRunner.buildDocument(code, token)') &&
           appJs.includes("handleSandboxMessage") &&
-          appJs.includes("submitTerminalInput(false)"),
-  "Run, console output, and input must use browser messaging");
+          !appJs.includes("requestTerminalInput") &&
+          !appJs.includes("submitTerminalInput"),
+  "Run and console output must use browser messaging; input must use native prompt()");
 assert.ok(!appJs.includes("mrtullyclass-backend.onrender.com") &&
           !appJs.includes("RUNNER_ACCESS_TOKEN") &&
           !appJs.includes("E2B_API_KEY"),
   "Classroom JavaScript must not use the paid cloud runner");
 
-assert.ok(css.includes(".terminal-input-form[hidden]"), "Hidden terminal input form must stay hidden");
+assert.ok(!html.includes('id="terminal-input-form"') &&
+          !css.includes(".terminal-input-form") &&
+          !html.includes("readLine()"),
+  "Legacy custom input interface must be removed entirely");
 assert.ok(appJs.includes('function runCode()') && appJs.includes('window.MTBrowserRunner.buildDocument(code, token)'),
   "Run must always execute JavaScript using the browser runner");
 assert.ok(!appJs.includes('js-runtime-mode') && !appJs.includes('function sandboxCsp()') &&
@@ -101,4 +105,10 @@ assert.ok(runner.includes("Ms. Whitby's Playground") &&
   "Browser console bridge must retain credited, error-capturing behavior");
 assert.ok(!html.includes('id="js-runtime-mode"'),
   "One runtime means no JavaScript mode selector");
+for (const legacy of ["readLine", "readInt", "readFloat", "mt-class-input-response"]) {
+  assert.ok(!appJs.includes(legacy) && !runner.includes(legacy) && !assignmentsJs.includes(legacy),
+    legacy + " should not be present in runtime or assignments");
+}
+assert.ok(assignmentsJs.includes("prompt(\\\"What name should I call you?\\\")"),
+  "Student input assignment must use standard browser prompt()");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
