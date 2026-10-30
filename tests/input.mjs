@@ -70,7 +70,18 @@ assert.deepEqual(types, ["log","log","error","clear"]);
 assert.equal(posted.at(-4).value, "Hello 42");
 assert.equal(posted.at(-2).value, "Error: Nope");
 
+// A real prompt() call is synchronous and returns either a string or null on Cancel.
+// Simulate the browser's native modal handler without replacing prompt in our runtime.
+context.prompt = text => text === "Please enter your name:" ? "Ada" : null;
+vm.runInContext('const userInput = prompt("Please enter your name:"); if (userInput !== null) { console.log("User entered:", userInput); }', context);
+assert.equal(posted.at(-1).value, "User entered: Ada");
+assert.equal(vm.runInContext('prompt("Cancel test")', context), null);
+vm.runInContext('println("Hello from CodeHS"); println(42);', context);
+assert.deepEqual(posted.slice(-2).map(m => m.value), ["Hello from CodeHS", "42"]);
+
 const htmlDoc = buildDocument('console.log("</script>")',token);
+assert.ok(html.includes('sandbox="allow-scripts allow-modals"') && !html.includes("allow-same-origin"),
+  "Native prompt requires allow-modals without giving the iframe the parent origin");
 assert.ok(htmlDoc.includes('<script type="module">'), "Browser-native JavaScript with top-level await");
 assert.ok(htmlDoc.includes("<\\/script>"), "Inline JavaScript must not break out of script tag");
 assert.ok(htmlDoc.includes("connect-src 'none'"), "Student iframe must not make network requests");

@@ -23,6 +23,7 @@
       'for (const level of ["log","info","warn","error","debug"]) {',
       '  console[level] = (...args) => __mtSend(level === "error" ? "error" : "log", args.map(__mtFormat).join(" ").slice(0,10000), null, level);',
       '}',
+      'function println(...args) { console.log(...args); }',
       'console.clear = () => __mtSend("clear", "");',
       'console.assert = (condition, ...args) => { if (!condition) __mtSend("error", "Assertion failed: " + args.map(__mtFormat).join(" ")); };',
       'window.onerror = (message, source, line) => { __mtSend("error", String(message) + (line ? " (line " + line + ")" : "")); return true; };',

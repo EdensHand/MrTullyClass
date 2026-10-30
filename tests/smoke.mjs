@@ -63,9 +63,9 @@ assert.ok(appJs.includes("initSplitWorkspace()") &&
 assert.ok(html.includes('id="browser-status"') && html.includes("Browser: Ready"),
   "JavaScript status should say it is browser-based");
 assert.ok(html.includes('id="execution-frame"') &&
-          html.includes('sandbox="allow-scripts"') &&
+          html.includes('sandbox="allow-scripts allow-modals"') &&
           !html.includes('allow-same-origin'),
-  "Programs must run inside an opaque-origin iframe with scripts only");
+  "Programs must stay opaque-origin while permitting native prompt dialogs");
 assert.ok(html.includes('id="stop-code"') && html.includes('id="console-output"'),
   "One console and Stop button must exist");
 assert.ok(html.includes('src="./browser-runner.js"'),
@@ -99,6 +99,8 @@ assert.ok(runner.includes("Ms. Whitby's Playground") &&
           runner.includes("window.onerror") &&
           runner.includes("onunhandledrejection"),
   "Browser console bridge must retain credited, error-capturing behavior");
+assert.ok(runner.includes("function println(...args)"),
+  "CodeHS-compatible println must be provided by the console bridge");
 assert.ok(!html.includes('id="js-runtime-mode"'),
   "One runtime means no JavaScript mode selector");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");

@@ -21,6 +21,13 @@ The browser runner provides optional classroom-only asynchronous helper function
 
 The student presses Run, types each response into the terminal and presses Enter. These helpers are not built-in JavaScript features and are not Node.js process.stdin. Inline browser ES modules permit top-level await.
 
+### Browser `prompt()` and CodeHS `println()`
+
+Standard synchronous `prompt("Please enter your name:")` is supported using the browser's native input dialog. Cancel returns `null`. The hidden execution iframe grants `allow-modals` while **remaining opaque-origin**, so the student's code does not receive access to the main page.
+
+CodeHS's classroom-specific `println(value)` helper is available as an alias for `console.log(value)`, and both write to the same output terminal. No execution mode switch is necessary. Browser or district policies can suppress native dialogs, so test `prompt()` on the student devices before assigning it; `await readLine()` remains available for inline terminal input.
+
+
 Existing drafts based on Node.js readline will not work in a browser. Download them if important, then use Reset starter to load the revised input exercise.
 
 ### Current scope and limitations
