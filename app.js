@@ -1,5 +1,5 @@
-/* MrTullyClass — single Node.js terminal pilot. Student source and terminal input
-   are sent to Render/E2B only when running; drafts stay on this device. */
+/* MrTullyClass browser-only JavaScript classroom editor.
+   Student programs run inside opaque-origin sandboxed iframes, not paid servers. */
 (function () {
   "use strict";
 
@@ -12,18 +12,16 @@
   const sidebarKey = storagePrefix + "sidebarCollapsed";
   const splitterKey = storagePrefix + "editorSplitPercent";
   const maximumCodeSize = 100000;
-  const backendHealthUrl = "https://mrtullyclass-backend.onrender.com/health";
-  const backendHealthTimeoutMs = 70000;
   let canStore = true;
   let currentCourse = "CSF";
   let currentLesson = null;
   let saveTimer = null;
   let toastTimer = null;
   let outputCount = 0;
-  let nodeSocket = null;
-  let nodeState = "idle";
-  let nodeAccessKey = null;
-  let runnerAvailable = false;
+  let runToken = null;
+  let pendingInput = null;
+  let inputQueue = [];
+  let runTimer = null;
 
   const $ = function (id) { return document.getElementById(id); };
   const elements = {
@@ -34,7 +32,7 @@
     objectives: $("lesson-objectives"), stretch: $("lesson-stretch"),
     editor: $("code-editor"), status: $("save-status"),
     file: $("file-name"), run: $("run-code"), finish: $("complete-button"),
-    output: $("console-output"), badge: $("result-badge"),
+    output: $("console-output"), frame: $("execution-frame"), badge: $("result-badge"),
     resultLabel: $("result-label"), note: $("run-note"),
     stats: $("editor-stats"), progress: $("progress-summary"),
     courseLabel: $("current-course-label"),
@@ -87,29 +85,22 @@
       lesson.id !== "cs3-canvas" && lesson.id !== "cs3-movement";
   }
 
-  function closeNodeConnection() {
-    const old = nodeSocket;
-    nodeSocket = null;
-    nodeState = "idle";
+  function stopExecution() {
+    runToken = null;
+    pendingInput = null;
+    inputQueue = [];
+    clearTimeout(runTimer);
+    runTimer = null;
     elements.inputForm.hidden = true;
     elements.inputField.value = "";
+    elements.frame.srcdoc = "";
     const stop = $("node-stop");
     stop.hidden = true;
     stop.disabled = true;
-    if (old) {
-      if (old.readyState === WebSocket.OPEN) {
-        old.send(JSON.stringify({ type: "stop" }));
-        old.close();
-      } else if (old.readyState === WebSocket.CONNECTING) {
-        old.addEventListener("open", function () { old.close(); }, { once: true });
-      } else if (old.readyState !== WebSocket.CLOSED) {
-        old.close();
-      }
-    }
   }
 
   function clearOutput(message) {
-    closeNodeConnection();
+    stopExecution();
     elements.output.classList.remove("error");
     elements.output.textContent = message || "Run your program to see its output here.";
     elements.badge.textContent = "Not run";
@@ -258,16 +249,16 @@
     $("dirty-dot").hidden = true;
     elements.run.disabled = !canRun;
     elements.run.textContent = canRun ? "▶ Run code" : "Editing only";
-    elements.resultLabel.textContent = "Node.js terminal";
+    elements.resultLabel.textContent = "JavaScript terminal";
     elements.note.textContent = canRun
-      ? "Your main.js executes in an isolated Node.js sandbox through Render. Code and terminal input are transmitted for execution."
+      ? "Runs JavaScript in an isolated browser frame. Use console.log() for output or await readLine() for input; no server upload."
       : lesson.type === "java"
-        ? "Java assignments are edit/download only. The Node.js terminal runs JavaScript, not Java."
+        ? "Java assignments are edit/download only; this terminal executes JavaScript."
         : "Graphics and webpage previews are on hold until a separate graphics environment is designed.";
     elements.finish.setAttribute("aria-pressed", String(isFinished(id)));
     elements.finish.textContent = isFinished(id) ? "✓ Finished locally" : "✓ Mark finished";
     clearOutput(canRun
-      ? "Press Run to execute main.js in the Node.js terminal."
+      ? "Press Run to execute JavaScript in the browser terminal."
       : "This lesson can be edited and downloaded, but it is not supported by the Node.js terminal.");
     editorStats();
     renderAssignmentList();
@@ -289,106 +280,76 @@
     elements.badge.textContent = isError ? "Error" : "Ran";
   }
 
-  // Node.js source is executed remotely in a separate E2B sandbox, never on Render.
-  // The access key stays in this page's memory and is not stored in localStorage.
-  function appendNodeChunk(chunk, error) {
-    if (nodeSocket === null) return;
-    const target = elements.output;
-    if (target.dataset.nodeInitial === "yes") {
-      target.textContent = "";
-      delete target.dataset.nodeInitial;
-    }
-    target.textContent = (target.textContent + String(chunk)).slice(-20000);
-    target.scrollTop = target.scrollHeight;
-    if (error) target.classList.add("error");
-  }
-
-  function runNodeCode(code) {
-    if (!runnerAvailable) {
-      appendOutput("Node.js is not ready: an instructor must configure E2B_API_KEY and RUNNER_ACCESS_TOKEN in Render and verify the health check.", true);
-      return;
-    }
-    if (!nodeAccessKey) {
-      const supplied = window.prompt("Instructor test access: enter RUNNER_ACCESS_TOKEN from Render (NOT your E2B API key). Do not share this key with students.");
-      if (supplied === null) {
-        appendOutput("Node.js run cancelled. The instructor test access key is required.", false);
-        return;
-      }
-      if (supplied.length < 32) {
-        appendOutput("The classroom access token must be at least 32 characters.", true);
-        return;
-      }
-      nodeAccessKey = supplied;
-    }
-
-    const socketUrl = backendHealthUrl.replace(/^https:/, "wss:").replace(/\/health$/, "/ws");
-    let ws;
-    try { ws = new WebSocket(socketUrl); }
-    catch (error) {
-      appendOutput("Could not open the Node.js terminal connection.", true);
-      return;
-    }
-    nodeSocket = ws;
-    nodeState = "connecting";
-    elements.output.textContent = "Connecting to isolated Node.js runner…\n";
-    elements.output.dataset.nodeInitial = "yes";
-    elements.badge.textContent = "Connecting";
-    const stop = $("node-stop");
-    stop.hidden = false;
-    stop.disabled = false;
-
-    ws.addEventListener("message", event => {
-      if (ws !== nodeSocket) return;
-      let msg;
-      try { msg = JSON.parse(event.data); } catch { return; }
-      if (!msg || typeof msg.type !== "string") return;
-      if (msg.type === "ready") {
-        ws.send(JSON.stringify({type: "run", code, token: nodeAccessKey}));
-        appendNodeChunk("$ node main.js\n");
-      } else if (msg.type === "status") {
-        elements.badge.textContent = "Running Node.js";
-        if (msg.message === "Running node main.js") {
-          nodeState = "running";
-          elements.inputLabel.textContent = "Terminal input (stdin)";
-          elements.inputField.value = "";
-          elements.inputForm.hidden = false;
-          $("terminal-cancel").textContent = "Stop program";
-          elements.inputField.focus();
-        }
-      } else if (msg.type === "stdout" || msg.type === "stderr") {
-        appendNodeChunk(msg.data || "", msg.type === "stderr");
-      } else if (msg.type === "error") {
-        appendNodeChunk("\n" + (msg.message || "Runner error") + "\n", true);
-        if ((msg.message || "").includes("access key")) nodeAccessKey = null;
-      } else if (msg.type === "exit") {
-        appendNodeChunk("\n[Process exited" + (msg.code === null ? "" : " with code " + msg.code) + "]\n");
-        elements.badge.textContent = msg.code === 0 ? "Finished" : "Stopped";
-        elements.inputForm.hidden = true;
-        $("terminal-cancel").textContent = "Cancel";
-        closeNodeConnection();
-      }
-    });
-    ws.addEventListener("error", () => {
-      if (nodeSocket !== ws) return;
-      appendNodeChunk("\nTerminal connection failed. Check Render and your runner access settings.\n", true);
-      elements.badge.textContent = "Connection error";
-    });
-    ws.addEventListener("close", () => {
-      if (nodeSocket !== ws) return;
-      elements.inputForm.hidden = true;
-      $("terminal-cancel").textContent = "Cancel";
-      appendNodeChunk("\n[Connection closed]\n");
-      closeNodeConnection();
-    });
-  }
-
-  function sendNodeInput() {
-    if (nodeState !== "running" || !nodeSocket || nodeSocket.readyState !== WebSocket.OPEN) return;
-    const value = elements.inputField.value.slice(0, 500);
-    nodeSocket.send(JSON.stringify({type: "stdin", value}));
-    appendNodeChunk(value + "\n");
+  // Each student program runs in an opaque-origin iframe. The bridge is
+  // adapted from Ms. Whitby's Playground and extended for terminal input.
+  function showNextInput() {
+    if (pendingInput || !inputQueue.length || !runToken) return;
+    pendingInput = inputQueue.shift();
+    elements.inputLabel.textContent = pendingInput.prompt || "Your program is waiting for input:";
     elements.inputField.value = "";
+    elements.inputForm.hidden = false;
+    elements.badge.textContent = "Waiting for input";
     elements.inputField.focus();
+  }
+
+  function requestTerminalInput(data) {
+    if (!Number.isSafeInteger(data.requestId) || data.requestId < 1 ||
+        data.requestId > 1000 || inputQueue.length > 50) {
+      appendOutput("Too many input requests.", true);
+      stopExecution();
+      return;
+    }
+    inputQueue.push({
+      token: runToken,
+      requestId: data.requestId,
+      prompt: typeof data.value === "string" ? data.value.slice(0, 300) : ""
+    });
+    showNextInput();
+  }
+
+  function submitTerminalInput(cancelled) {
+    if (!pendingInput || !runToken || pendingInput.token !== runToken) return;
+    const request = pendingInput;
+    const value = elements.inputField.value.slice(0, 500);
+    pendingInput = null;
+    elements.inputForm.hidden = true;
+    elements.inputField.value = "";
+
+    if (!cancelled) appendOutput("> " + value, false);
+    const frameWindow = elements.frame.contentWindow;
+    if (frameWindow) {
+      frameWindow.postMessage({
+        kind: "mt-class-input-response",
+        token: request.token,
+        requestId: request.requestId,
+        value: value,
+        cancelled: !!cancelled
+      }, "*");
+    }
+    if (cancelled) {
+      appendOutput("Input cancelled.", true);
+      stopExecution();
+      elements.badge.textContent = "Stopped";
+    } else {
+      elements.badge.textContent = "Running";
+      showNextInput();
+    }
+  }
+
+  function handleSandboxMessage(event) {
+    if (!runToken || event.source !== elements.frame.contentWindow) return;
+    const data = event.data;
+    if (!data || data.kind !== "mt-class-output" || data.token !== runToken) return;
+    if (data.type === "input-request") {
+      requestTerminalInput(data);
+    } else if (data.type === "clear") {
+      elements.output.textContent = "";
+      outputCount = 0;
+    } else if (data.type === "log" || data.type === "error") {
+      appendOutput(String(data.value ?? "").slice(0, 10000), data.type === "error");
+    } else if (data.type === "complete") {
+      if (!pendingInput && inputQueue.length === 0) elements.badge.textContent = "Finished";
+    }
   }
 
   function runCode() {
@@ -400,7 +361,19 @@
       appendOutput("This program is too large to run. Download the file instead.", true);
       return;
     }
-    runNodeCode(code);
+    try {
+      const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      const documentSource = window.MTBrowserRunner.buildDocument(code, token);
+      runToken = token;
+      elements.frame.srcdoc = documentSource;
+      elements.badge.textContent = "Running";
+      const stop = $("node-stop");
+      stop.hidden = false;
+      stop.disabled = false;
+      elements.output.textContent = "Running JavaScript in your browser…";
+    } catch (error) {
+      appendOutput(error instanceof Error ? error.message : "Unable to run JavaScript.", true);
+    }
   }
 
   function downloadFile(filename, contents, mime) {
@@ -576,55 +549,6 @@
     setPercent(current, false);
   }
 
-  // Connection check only: never submit code or student information to Render.
-  async function checkBackendHealth() {
-    const button = $("backend-status");
-    const label = $("backend-status-text");
-    if (button.disabled) return;
-
-    function setBackendStatus(state, message, detail) {
-      button.dataset.state = state;
-      label.textContent = message;
-      button.title = detail;
-    }
-
-    button.disabled = true;
-    setBackendStatus("checking", "Render: Connecting…",
-      "Checking the health endpoint. A sleeping Render service may take a little while to wake.");
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(function () { controller.abort(); }, backendHealthTimeoutMs);
-    try {
-      const response = await fetch(backendHealthUrl, {
-        method: "GET",
-        mode: "cors",
-        credentials: "omit",
-        cache: "no-store",
-        signal: controller.signal
-      });
-      if (!response.ok) throw new Error("Server returned HTTP " + response.status);
-      const data = await response.json();
-      if (!data || data.status !== "ok" || data.service !== "MrTullyClass Backend") {
-        throw new Error("Unexpected health-check response");
-      }
-      runnerAvailable = data.codeExecutionEnabled === true;
-      if (data.codeExecutionEnabled !== false) {
-        setBackendStatus("connected", "Render: Connected",
-          "Node.js execution is enabled on the isolated runner. Click to recheck.");
-      } else {
-        setBackendStatus("connected", "Render: Setup needed",
-          "Render is online, but the Node.js runner still needs its E2B key and instructor access token. Click to recheck.");
-      }
-    } catch (error) {
-      runnerAvailable = false;
-      setBackendStatus("unavailable", "Render: Check failed",
-        "Couldn't reach the backend. It may be waking, offline, or blocked by the network. Click to retry.");
-    } finally {
-      clearTimeout(timeoutId);
-      button.disabled = false;
-    }
-  }
-
   function syncSidebarToggle() {
     const shell = document.querySelector(".app-shell");
     const toggle = $("sidebar-toggle");
@@ -649,7 +573,6 @@
     $("sidebar-toggle").addEventListener("click", toggleSidebar);
     window.addEventListener("resize", syncSidebarToggle);
     $("topbar-help").addEventListener("click", function () { $("help-dialog").showModal(); });
-    $("backend-status").addEventListener("click", checkBackendHealth);
     document.querySelectorAll(".course-button").forEach(function (button) {
       button.addEventListener("click", function () { setCourse(button.dataset.course); });
     });
@@ -676,25 +599,18 @@
     $("clear-output").addEventListener("click", function () { clearOutput("Output cleared. Run the program again when ready."); });
     elements.inputForm.addEventListener("submit", function (event) {
       event.preventDefault();
-      if (nodeState === "running") sendNodeInput();
+      submitTerminalInput(false);
     });
     $("terminal-cancel").addEventListener("click", function () {
-      if (nodeSocket) {
-        elements.output.textContent += "\n[Stopped by student]\n";
-        elements.inputForm.hidden = true;
-        $("terminal-cancel").textContent = "Cancel";
-        closeNodeConnection();
-      }
+      submitTerminalInput(true);
     });
     $("node-stop").addEventListener("click", function () {
-      if (nodeSocket) {
-        elements.output.textContent += "\n[Stopped by student]\n";
-        elements.inputForm.hidden = true;
-        $("terminal-cancel").textContent = "Cancel";
-        closeNodeConnection();
-        elements.badge.textContent = "Stopped";
-      }
+      if (!runToken) return;
+      stopExecution();
+      elements.output.textContent += "\n[Stopped by student]\n";
+      elements.badge.textContent = "Stopped";
     });
+    window.addEventListener("message", handleSandboxMessage);
     elements.finish.addEventListener("click", toggleFinished);
     $("export-work").addEventListener("click", exportBackup);
     $("import-work").addEventListener("click", function () { $("backup-file").click(); });
@@ -729,7 +645,6 @@
     syncSidebarToggle();
     initSplitWorkspace();
     listen();
-    checkBackendHealth();
     const savedCourse = readStorage(courseKey);
     const fromHash = decodeURIComponent(location.hash.slice(1));
     const target = byId.get(fromHash);
