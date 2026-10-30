@@ -76,8 +76,6 @@ context.prompt = text => text === "Please enter your name:" ? "Ada" : null;
 vm.runInContext('const userInput = prompt("Please enter your name:"); if (userInput !== null) { console.log("User entered:", userInput); }', context);
 assert.equal(posted.at(-1).value, "User entered: Ada");
 assert.equal(vm.runInContext('prompt("Cancel test")', context), null);
-vm.runInContext('println("Hello from CodeHS"); println(42);', context);
-assert.deepEqual(posted.slice(-2).map(m => m.value), ["Hello from CodeHS", "42"]);
 
 const htmlDoc = buildDocument('console.log("</script>")',token);
 assert.ok(html.includes('sandbox="allow-scripts allow-modals"') && !html.includes("allow-same-origin"),

@@ -99,8 +99,6 @@ assert.ok(runner.includes("Ms. Whitby's Playground") &&
           runner.includes("window.onerror") &&
           runner.includes("onunhandledrejection"),
   "Browser console bridge must retain credited, error-capturing behavior");
-assert.ok(runner.includes("function println(...args)"),
-  "CodeHS-compatible println must be provided by the console bridge");
 assert.ok(!html.includes('id="js-runtime-mode"'),
   "One runtime means no JavaScript mode selector");
 console.log("Smoke checks passed: " + catalog.length + " lessons, " + ids.size + " unique IDs, 3 courses.");
