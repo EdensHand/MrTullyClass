@@ -249,6 +249,11 @@ function begin(){
   bind("github-submit",()=>void submit());
   bind("github-repository-choose",chooseRepo);
   bind("github-repository-cancel",()=>el("github-repo-dialog").close());
+  const install=el("github-app-install");
+  if(install && /^[a-z0-9-]+$/.test(cfg.appSlug||"")){
+    install.href="https://github.com/apps/"+cfg.appSlug+"/installations/new";
+    install.hidden=false;
+  }
   window.addEventListener("hashchange",showButtons);
   showButtons();
 }
