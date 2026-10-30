@@ -9,8 +9,10 @@
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./styles.css">
   <script defer src="./assignments.js"></script>
+  <script defer src="./account-config.js"></script>
   <script defer src="./browser-runner.js"></script>
   <script defer src="./app.js"></script>
+  <script type="module" src="./account.mjs"></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to assignment workspace</a>
@@ -56,8 +58,8 @@
       <div class="sidebar-spacer"></div>
       <div class="sidebar-info">
         <span class="online-dot" aria-hidden="true"></span>
-        <strong>Local workspace</strong>
-        <p>Your edits stay in this browser. Download your code or export a backup before switching devices.</p>
+        <strong>Guest or GitHub account</strong>
+        <p>Guest drafts stay on this device. GitHub sign-in can sync drafts after cloud setup.</p>
         <button id="open-help" type="button" class="text-button">How saving works <span aria-hidden="true">↗</span></button>
       </div>
       <div class="sidebar-bottom">
@@ -70,7 +72,11 @@
       <header class="topbar">
         <div class="topbar-location"><span class="crumb">Classroom</span><span class="crumb-sep">/</span><strong id="current-course-label">CS Fundamentals</strong></div>
         <div class="topbar-actions">
-          <span class="status-pill"><span class="status-dot"></span>No account needed</span>
+          <span class="status-pill"><span class="status-dot"></span><span id="account-status" role="status">Guest · local saves</span></span>
+          <button type="button" id="account-signin" class="outline-button compact" hidden>Sign in with GitHub</button>
+          <button type="button" id="account-classes" class="outline-button compact" hidden>My classes</button>
+          <button type="button" id="account-import-guest" class="outline-button compact" hidden>Import guest work</button>
+          <button type="button" id="account-signout" class="outline-button compact" hidden>Sign out</button>
           <span class="backend-status" id="browser-status" data-state="connected"
                 title="JavaScript executes locally in an isolated browser frame">
             <span class="backend-status-dot" aria-hidden="true"></span>
@@ -88,7 +94,7 @@
           <div class="hero-copy">
             <span class="eyebrow"><span class="eyebrow-line"></span> YOUR SPACE TO BUILD</span>
             <h1 id="hero-title">Think it. <em>Code it.</em><br>Make it happen.</h1>
-            <p>Real code. Real projects. No account setup. Pick a challenge and start building.</p>
+            <p>Real code. Real projects. Start as a guest, or sign in to save across devices.</p>
             <div class="hero-facts">
               <span><span class="fact-icon">⌘</span> Write actual code</span>
               <span><span class="fact-icon">◷</span> Auto-save in browser</span>
@@ -166,6 +172,7 @@
                   <span class="save-status" id="save-status" role="status" aria-live="polite">Ready</span>
                   <button type="button" id="reset-code" class="toolbar-action">Reset starter</button>
                   <button type="button" id="download-code" class="toolbar-action">Download ↧</button>
+                  <button type="button" id="submit-work" class="toolbar-action" hidden>Submit work</button>
                   <button type="button" id="run-code" class="run-button">▶ Run code</button>
                   <button type="button" id="stop-code" class="toolbar-action" hidden disabled>■ Stop</button>
                 </div>
@@ -199,16 +206,22 @@
             </div>
           </section>
         </div>
-        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>No login • No server submissions • Save a backup of important work</span></footer>
+        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>Guest drafts stay local · Account drafts can sync privately</span></footer>
       </main>
     </div>
   </div>
 
+  <dialog id="classes-dialog" class="help-dialog">
+    <div class="modal-top"><h2>Classes &amp; hand-ins</h2><button type="button" id="close-classes" class="close-button" aria-label="Close classes">×</button></div>
+    <div id="classes-content" aria-live="polite"></div>
+    <button type="button" id="dismiss-classes" class="outline-button">Close</button>
+  </dialog>
   <dialog id="help-dialog" class="help-dialog">
     <div class="modal-top"><h2>Where does my work go?</h2><button id="close-help" type="button" aria-label="Close help" class="close-button">×</button></div>
-    <p>Your drafts are saved <strong>in this browser on this device</strong> when local storage is available. Pressing Run executes JavaScript inside a sandboxed browser frame. Your code and input are not uploaded to an execution server. This pilot does not link work to a student account or Google Classroom.</p>
+    <p>Guest drafts are saved in this browser when local storage is available. Signed-in students can sync private drafts across devices. JavaScript execution still happens in the browser; it does not run on a paid server.</p>
+    <p>Saving or marking work finished does not submit it. A signed-in student can join an approved class and use Submit work to turn in a separate dated copy.</p>
     <p><strong>Before you leave:</strong> use <strong>Download</strong> to save an individual code file or <strong>Back up work</strong> to save all your drafts. You can restore a backup later with <strong>Import backup</strong>.</p>
-    <p>Do not enter passwords or private information into the code editor or terminal. This site does not give teachers access to student drafts or grades. Follow your teacher's instructions for submitting downloaded files.</p>
+    <p>Teachers can view explicitly submitted copies, not private drafts. Sign out on shared devices. GitHub repository permissions are not required to sign in.</p>
     <button type="button" id="acknowledge-help" class="run-button">Got it</button>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
