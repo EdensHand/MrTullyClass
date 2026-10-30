@@ -55,7 +55,9 @@ function selected(){
 function fileDescriptor(lesson,choice) {
   return {
     repo:choice.repo,mode:choice.mode,lessonId:lesson.id,course:lesson.course,
-    filename:lesson.type==="java"?"Main.java":lesson.id+"."+(lesson.type==="html"?"html":"js")
+    filename:lesson.type==="java"?"Main.java":choice.mode==="assignment"
+      ?(lesson.type==="html"?"index.html":"main.js")
+      :lesson.id+"."+(lesson.type==="html"?"html":"js")
   };
 }
 function versionKey(descriptor) {
@@ -258,8 +260,10 @@ async function init() {
     try{
       activeTicket=info.ticket;
       const data=await backend("user");
-      if(Number.isSafeInteger(data.id)&&typeof data.login==="string")user=data;
-      else throw Error("Invalid GitHub identity");
+      if(Number.isSafeInteger(data.id)&&typeof data.login==="string"){
+        user=data;
+        try{repositories=(await backend("repos")).repositories||[];}catch{repositories=[];}
+      }else throw Error("Invalid GitHub identity");
     }catch(error){session.removeItem(KEY+"session");callout(error.message);}
   }
   ready=true;

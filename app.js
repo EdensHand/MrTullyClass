@@ -37,7 +37,7 @@
 
   function readStorage(key) {
     try {
-      return window.MTCloud?.storage?.getItem(key) ?? localStorage.getItem(key);
+      return window.MTCloud?.storage ? window.MTCloud.storage.getItem(key) : localStorage.getItem(key);
     } catch (error) {
       canStore = false;
       return null;

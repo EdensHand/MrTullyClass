@@ -14,13 +14,15 @@ export function filePath({course,lessonId,filename,mode}) {
   if(!ALLOWED_COURSES.has(course) ||
       typeof lessonId!=="string" || !/^[a-z0-9-]{1,100}$/.test(lessonId) ||
       typeof filename!=="string" ||
-      !/^(?:Main\.java|[a-z0-9-]{1,100}\.(?:js|html))$/.test(filename) ||
+      !/^(?:Main\.java|main\.js|index\.html|[a-z0-9-]{1,100}\.(?:js|html))$/.test(filename) ||
       !["assignment","portfolio"].includes(mode)) throw new Error("Invalid assignment file");
   if(filename==="Main.java" && course!=="AP CSA") throw new Error("Java file requires AP CSA");
+  if(mode==="assignment"){
+    if(!["Main.java","main.js","index.html"].includes(filename))throw new Error("Invalid assignment root file");
+    return filename;
+  }
   if(filename!=="Main.java" && filename!==lessonId+".js" && filename!==lessonId+".html")
-    throw new Error("Assignment name mismatch");
-  // In a Classroom 50 assignment repo tests normally expect code at the root.
-  if(mode==="assignment")return filename;
+    throw new Error("Portfolio file name mismatch");
   return "classwork/"+course.toLowerCase().replace(/\s+/g,"-")+"/"+lessonId+"/"+filename;
 }
 function validRepo(value) {
