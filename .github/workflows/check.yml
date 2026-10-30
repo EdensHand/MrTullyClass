@@ -23,12 +23,17 @@ jobs:
           node --check app.js
           node --check browser-runner.js
           node --check assignments.js
+          node --check github-config.js
+          node --check github-first.mjs
+          node --check github-worker.mjs
+          node --check tests/github-first.mjs
           node --check tests/smoke.mjs
           node --check tests/input.mjs
       - name: Run curriculum and interface smoke checks
         run: |
           node tests/smoke.mjs
           node tests/input.mjs
+          node tests/github-first.mjs
       - name: Test Node.js backend health endpoint
         run: |
           node --check backend/server.js

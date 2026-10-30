@@ -54,3 +54,19 @@ The live website no longer uses Render or E2B. Once the browser terminal is veri
 ## Credits
 
 Browser console bridge adapted from Ms. Whitby's Playground with the project owner's permission. Other artwork and course material remain attributable to their respective creators.
+
+
+## Optional GitHub-first classroom saving and grading (development)
+
+A separate feature branch, `github-first-classroom50`, adds GitHub App sign-in, a
+Cloudflare Worker for secure OAuth token exchange and GitHub repository access,
+explicit **Save GitHub / Load GitHub / Submit to GitHub** controls, and
+[Classroom 50](https://classroom50.org/) compatible `submit/...` tags.
+
+**No Supabase is required.** Guests continue using local browser autosaving,
+and GitHub commits are optional. Teachers configure and review autograding
+through Classroom 50, not the MrTullyClass website. The feature is not ready
+for real students until a GitHub App and Worker are configured and tested.
+
+Follow [SETUP-GITHUB-CLASSROOM50.md](SETUP-GITHUB-CLASSROOM50.md) for permissions,
+secrets management, school privacy considerations, and the complete rollout checklist.
