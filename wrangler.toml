@@ -1,0 +1,10 @@
+name = "mrtullyclass-github-api"
+main = "github-worker.mjs"
+compatibility_date = "2026-10-01"
+
+[vars]
+FRONTEND_ORIGIN = "https://edenshand.github.io"
+# Secrets (never commit):
+# GITHUB_CLIENT_ID
+# GITHUB_CLIENT_SECRET
+# SESSION_KEY (64 random hexadecimal characters)
