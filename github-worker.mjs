@@ -162,6 +162,14 @@ async function handle(input,token,origin) {
 export default {
   async fetch(request,env) {
     const origin=env.FRONTEND_ORIGIN||"https://edenshand.github.io";
+    // Public, read-only health endpoint for deployment diagnostics. Never return credentials.
+    // It is safe to open directly in a browser before GitHub OAuth is configured.
+    if(request.method==="GET" && new URL(request.url).pathname==="/health"){
+      const configured=!!(env.GITHUB_CLIENT_ID&&env.GITHUB_CLIENT_SECRET&&/^[0-9a-fA-F]{64}$/.test(env.SESSION_KEY||""));
+      return new Response(JSON.stringify({status:"ok",githubConfigured:configured}),{
+        status:200,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}
+      });
+    }
     if(request.headers.get("Origin")!==origin)return apiFail("Origin not permitted",403,origin);
     if(request.method==="OPTIONS")return new Response(null,{status:204,headers:{
       "Access-Control-Allow-Origin":origin,"Access-Control-Allow-Headers":"authorization, content-type",
