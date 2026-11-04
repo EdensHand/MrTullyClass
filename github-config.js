@@ -2,5 +2,5 @@
 window.MT_GITHUB = {
   clientId: "Iv23lifqafE2DlSBZJM1",
   apiBase: "",
-  appSlug: ""
+  appSlug: "mrtullyclass-coding-workspace"
 };
