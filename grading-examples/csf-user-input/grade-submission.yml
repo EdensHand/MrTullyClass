@@ -1,0 +1,56 @@
+# Copy this file to .github/workflows/grade-submission.yml on the
+# DEFAULT BRANCH of each CSF Interactive Conversation assignment repository.
+# Student submissions from MrTullyClass create submit/csf-user-input-* tags.
+# Formative feedback only: students with write access to the repository
+# may edit workflows. This is not an authoritative, tamper-proof gradebook.
+name: Grade CSF Interactive Conversation
+
+on:
+  push:
+    tags:
+      - 'submit/csf-user-input-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  grade:
+    name: Grade student submission
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out submitted code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Check out the teacher-authored sample grader
+        uses: actions/checkout@v4
+        with:
+          repository: EdensHand/MrTullyClass
+          # Pin to a reviewed commit. Update deliberately after reviewing grader changes.
+          ref: 64fc295122ff3c0a4a20df991d33ec5f086ccfb6
+          path: trusted-grader
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run tests and publish results
+        shell: bash
+        run: |
+          set +e
+          node trusted-grader/grading-examples/csf-user-input/grader.mjs main.js > "$RUNNER_TEMP/results.txt" 2>&1
+          grade_status=$?
+          {
+            echo '### Interactive Conversation — automated checks'
+            echo ''
+            echo 'These checks provide practice feedback, not a verified official grade.'
+            echo ''
+            echo '```text'
+            cat "$RUNNER_TEMP/results.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$RUNNER_TEMP/results.txt"
+          exit "$grade_status"
