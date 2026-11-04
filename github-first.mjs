@@ -220,14 +220,14 @@ async function save(silent=false){
 async function submit(){
   const choice=selected(),lesson=currentLesson();
   if(!choice||!lesson)return alert("Connect an assignment repository first.");
-  if(choice.mode!=="assignment")return alert("Select Assignment repository mode for Classroom 50 submissions.");
+  if(choice.mode!=="assignment")return alert("Select Assignment repository mode for grading submissions.");
   if(!confirm("Submit "+lesson.title+" on GitHub? MrTullyClass will save your latest code, then create a submit/ tag for the assignment grader."))return;
   const saved=await save(true);
   if(!saved)return;
   busy=true;
   try{
     const result=await backend("submit",{...saved.descriptor,commitSha:saved.commitSha});
-    callout("Submitted GitHub tag "+result.tag+" · check your repository Actions and Classroom 50 grades.");
+    callout("Submitted GitHub tag "+result.tag+" · check GitHub Actions for grading feedback.");
     const link=el("github-submission-link");
     if(link){link.href=result.url;link.textContent="View submission on GitHub";link.hidden=false;}
   }catch(error){callout(error.message+" Your saved code remains in GitHub.");}
