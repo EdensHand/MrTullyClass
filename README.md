@@ -2,7 +2,7 @@
 
 **Free GitHub Pages site:** https://edenshand.github.io/MrTullyClass/
 
-MrTullyClass is a static, no-login learning space with one editor, one Run code button, one output terminal, CSF/CS3/AP CSA assignments, autosaved drafts, downloads and backups.
+MrTullyClass is a static coding workspace with one editor, one Run code button, one output terminal, CSF/CS3/AP CSA assignments, autosaved drafts, downloads and backups. Guest use requires no login; an optional GitHub App sign-in and repository submission flow is being prepared in this draft branch.
 
 ## Zero-cost JavaScript execution
 
@@ -30,7 +30,8 @@ The execution iframe uses `sandbox="allow-scripts allow-modals"` without `allow-
 ### Current scope and limitations
 
 - Standard JavaScript console exercises, logging, errors and input work locally in the browser.
-- No logins, server-side submissions or trusted grading. Drafts are saved locally unless explicitly downloaded/exported.
+- Guests use local browser drafts and downloads. Optional GitHub sign-in, explicit repository saves, and submission tags require GitHub App and Cloudflare Worker configuration; the feature is not live yet.
+- The example GitHub Actions grading workflow provides practice feedback, not tamper-proof official grades.
 - AP CSA Java, HTML and canvas/movement graphics lessons remain edit/download only until we design their execution environments separately.
 - This is a learning sandbox, not an isolation boundary for hostile code. An endless synchronous loop can hang a browser tab; reload to escape. Stop replaces the execution iframe, but it cannot interrupt a main-thread infinite loop reliably.
 - External imports, network access and forms are blocked from student JavaScript for safety.
@@ -56,17 +57,24 @@ The live website no longer uses Render or E2B. Once the browser terminal is veri
 Browser console bridge adapted from Ms. Whitby's Playground with the project owner's permission. Other artwork and course material remain attributable to their respective creators.
 
 
-## Optional GitHub-first classroom saving and grading (development)
+## Optional GitHub-first student sign-in and direct grading (DRAFT)
 
-A separate feature branch, `github-first-classroom50`, adds GitHub App sign-in, a
-Cloudflare Worker for secure OAuth token exchange and GitHub repository access,
+The `github-first-classroom50` feature branch adds GitHub App PKCE sign-in,
+a Cloudflare Worker for secure OAuth token exchange and GitHub repository access,
 explicit **Save GitHub / Load GitHub / Submit to GitHub** controls, and
-[Classroom 50](https://classroom50.org/) compatible `submit/...` tags.
+`submit/...` Git tags that can trigger **direct GitHub Actions graders**.
 
-**No Supabase is required.** Guests continue using local browser autosaving,
-and GitHub commits are optional. Teachers configure and review autograding
-through Classroom 50, not the MrTullyClass website. The feature is not ready
-for real students until a GitHub App and Worker are configured and tested.
+**Neither Classroom 50 nor Supabase is required for this initial workflow.**
+Guests continue using local browser autosaving and GitHub commits are optional.
+A sample `csf-user-input` grader and workflow provide formative feedback only.
+There is no protected gradebook yet.
 
-Follow [SETUP-GITHUB-CLASSROOM50.md](SETUP-GITHUB-CLASSROOM50.md) for permissions,
-secrets management, school privacy considerations, and the complete rollout checklist.
+**Do not merge or invite students until the GitHub App and Worker are configured,
+the Actions checks pass, and a separate student GitHub account completes an
+end-to-end save/load/submit/grade test.**
+
+Start with [QUICKSTART-OAUTH-DEPLOY.md](QUICKSTART-OAUTH-DEPLOY.md) for the
+no-terminal Cloudflare deployment instructions. For direct formative grading
+see [SETUP-DIRECT-GITHUB-GRADING.md](SETUP-DIRECT-GITHUB-GRADING.md).
+The older [SETUP-GITHUB-CLASSROOM50.md](SETUP-GITHUB-CLASSROOM50.md) is retained
+for reference but Classroom 50 is optional.
