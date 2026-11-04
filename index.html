@@ -209,19 +209,19 @@
             </div>
           </section>
         </div>
-        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>Guest autosave • Optional GitHub commits • Classroom 50 grading</span></footer>
+        <footer class="footer"><span>MrTullyClass · An experimental learning space</span><span>Guest autosave • Optional GitHub commits • GitHub Actions grading</span></footer>
       </main>
     </div>
   </div>
 
   <dialog id="github-repo-dialog" class="help-dialog">
     <div class="modal-top"><h2>Choose a GitHub repository</h2></div>
-    <p>Choose a repository authorized for MrTullyClass. Use Assignment mode for Classroom 50 repositories so graders find your source file at the root.</p>
+    <p>Choose a repository authorized for MrTullyClass. Use Assignment mode for grading repositories so the grader finds your source file at the root.</p>
     <label for="github-repository">GitHub repository</label>
     <select id="github-repository"></select>
     <label for="github-repository-mode">File organization</label>
     <select id="github-repository-mode">
-      <option value="assignment">Assignment repository (root file; supports Classroom 50 grading)</option>
+      <option value="assignment">Assignment repository (root file; supports GitHub Actions grading)</option>
       <option value="portfolio">Personal portfolio (classwork/course/assignment/)</option>
     </select>
     <p>Don't see your assignment? Your teacher must install the GitHub App for its repository and grant you access.</p>
@@ -233,7 +233,7 @@
     <div class="modal-top"><h2>Where does my work go?</h2><button id="close-help" type="button" aria-label="Close help" class="close-button">×</button></div>
     <p>Drafts save to this browser automatically when local storage is available, even without an account. GitHub sign-in is optional and lets you explicitly save code to repositories authorized for the MrTullyClass GitHub App. Student code still runs locally in the browser.</p>
     <p><strong>Before you leave:</strong> use <strong>Download</strong> to save an individual code file or <strong>Back up work</strong> to save all your drafts. You can restore a backup later with <strong>Import backup</strong>.</p>
-    <p>To submit a Classroom 50 assignment, select its assignment repository and use Submit to GitHub. This creates a Git tag for the grader, which must already be configured by your teacher. Teachers review coursework in GitHub or Classroom 50; this website has no gradebook. Sign out on shared devices.</p>
+    <p>To submit an assignment, select its assignment repository and choose Submit to GitHub. This creates a Git tag; a teacher-configured GitHub Actions workflow can grade the submission. Results appear in GitHub Actions, not on this site. This website has no gradebook. Sign out on shared devices.</p>
     <button type="button" id="acknowledge-help" class="run-button">Got it</button>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
