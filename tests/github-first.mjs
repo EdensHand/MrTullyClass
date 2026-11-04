@@ -62,6 +62,14 @@ async function response(action,params={},ticket=null,origin=env.FRONTEND_ORIGIN)
   const r=await worker.fetch(make(action,params,ticket,origin),env);
   return {status:r.status,body:await r.json()};
 }
+// Health can be checked before configuring OAuth, without leaking any secrets.
+const ready = await worker.fetch(new Request("https://example.workers.dev/health"),env);
+assert.equal(ready.status,200);
+assert.deepEqual(await ready.json(),{status:"ok",githubConfigured:true});
+const notReady = await worker.fetch(new Request("https://example.workers.dev/health"),{
+  ...env,GITHUB_CLIENT_SECRET:"",SESSION_KEY:""
+});
+assert.deepEqual(await notReady.json(),{status:"ok",githubConfigured:false});
 assert.equal(filePath({course:"CSF",lessonId:"csf-hello",filename:"main.js",mode:"assignment"}),"main.js");
 assert.equal(filePath({course:"AP CSA",lessonId:"ap-java",filename:"Main.java",mode:"assignment"}),"Main.java");
 assert.equal(filePath({course:"CSF",lessonId:"csf-hello",filename:"csf-hello.js",mode:"portfolio"}),"classwork/csf/csf-hello/csf-hello.js");
