@@ -1,4 +1,6 @@
-# GitHub-first MrTullyClass: original optional Classroom 50 guide\n\n**Current preferred formative-feedback plan:** See [direct GitHub Actions grading](SETUP-DIRECT-GITHUB-GRADING.md), which does not require Classroom 50. This older guide remains as a reference for its GitHub App / Cloudflare Worker OAuth setup. The live site is unchanged until the draft branch is configured and safely merged.
+# GitHub-first MrTullyClass: original optional Classroom 50 guide
+
+**Current preferred formative-feedback plan:** See [direct GitHub Actions grading](SETUP-DIRECT-GITHUB-GRADING.md), which does not require Classroom 50. This older guide remains as a reference for its GitHub App / Cloudflare Worker OAuth setup. The live site is unchanged until the draft branch is configured and safely merged.
 
 This branch replaces the earlier Supabase prototype. **No Supabase database or project is required.** The live site remains unchanged until this branch is reviewed, configured, tested, and merged.
 
