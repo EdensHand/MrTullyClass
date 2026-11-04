@@ -116,6 +116,11 @@ assert.ok(app.includes("window.MTCloud.storage.getItem(key) : localStorage.getIt
 assert.ok(frontend.includes("clearLocalAccount()"),"Sign-out must scrub account-local cache");
 assert.ok(!config.includes("CLIENT_SECRET")&&!config.includes("SESSION_KEY"),"No backend secrets in public configuration");
 assert.ok(!html.includes("supabase"));
+const directGrade=fs.readFileSync("grading-examples/csf-user-input/grade-submission.yml","utf8");
+assert.match(directGrade,/submit\\/csf-user-input-\\*/);
+assert.match(directGrade,/contents: read/);
+assert.match(directGrade,/trusted-grader\\/grading-examples\\/csf-user-input\\/grader\\.mjs main\\.js/);
+assert.ok(!directGrade.includes("secrets."),"Student grader must not reference instructor secrets");
 globalThis.fetch=originalFetch;
 console.log("GitHub-first OAuth, repo authorization, versioned saves and Classroom 50 tag submission tests passed.");
 
